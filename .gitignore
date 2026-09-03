@@ -1,0 +1,17 @@
+# 认证信息（绝不提交）
+.gh_token
+*.token
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 临时 / 备份产物
+*.bak
+.trash/
+outputs/province_verify.txt
+
+# 系统文件
+.DS_Store
+Thumbs.db

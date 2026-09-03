@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>中国人力资源·税务·社保·合规 政策监控看板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#F8FAFC;color:#1E293B;line-height:1.6}
+.header{background:linear-gradient(135deg,#1E3A5F 0%,#0F172A 100%);color:#fff;padding:36px 32px 28px;text-align:center}
+.header h1{font-size:24px;font-weight:700;margin-bottom:4px;letter-spacing:1px}
+.header .sub{font-size:13px;opacity:.78;margin-bottom:16px}
+.header .date-badge{display:inline-block;background:rgba(255,255,255,.15);padding:4px 16px;border-radius:20px;font-size:12px;margin-bottom:16px;backdrop-filter:blur(4px)}
+.keywords{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.kw{background:rgba(255,255,255,.12);padding:3px 14px;border-radius:20px;font-size:11px;backdrop-filter:blur(4px)}
+.stats-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.stat-box{background:rgba(255,255,255,.08);border-radius:10px;padding:8px 16px;text-align:center;min-width:80px}
+.stat-num{font-size:22px;font-weight:800;display:block}
+.stat-label{font-size:10px;opacity:.7}
+.stat-box.alert .stat-num{color:#F87171}
+.stat-box.ok .stat-num{color:#34D399}
+.stat-box.warn .stat-num{color:#FBBF24}
+.controls{padding:14px 24px;background:#fff;border-bottom:1px solid #E2E8F0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+.view-btn{padding:7px 18px;border:2px solid #CBD5E1;background:#fff;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s}
+.view-btn.active{background:#1E40AF;color:#fff;border-color:#1E40AF}
+.view-btn:hover{border-color:#1E40AF}
+.filter-btn{padding:5px 12px;border:1px solid #E2E8F0;background:#F8FAFC;border-radius:6px;cursor:pointer;font-size:12px;transition:all .2s}
+.filter-btn.active{background:#1E40AF;color:#fff;border-color:#1E40AF}
+.filter-btn:hover{background:#EEF2FF}
+.sep{color:#CBD5E1;font-size:18px}
+.container{max-width:1200px;margin:0 auto;padding:24px 20px}
+
+/* Dashboard View */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.dash-section{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:18px;overflow:hidden}
+.dash-section.full{grid-column:1/-1}
+.dash-title{font-size:15px;font-weight:700;color:#0F172A;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.dash-title .icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}
+.alert-list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto}
+.alert-item{display:flex;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid #E2E8F0;cursor:pointer;transition:all .2s}
+.alert-item:hover{border-color:#93C5FD;background:#F8FAFC}
+.alert-badge{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:7px}
+.alert-badge.new{background:#10B981}
+.alert-badge.upcoming{background:#F59E0B}
+.alert-badge.warning{background:#EF4444}
+.alert-badge.info{background:#3B82F6}
+.alert-content{flex:1;min-width:0}
+.alert-title{font-size:13px;font-weight:600;color:#0F172A;line-height:1.4}
+.alert-meta{font-size:11px;color:#64748B;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.alert-tag{padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;color:#fff}
+.alert-desc{font-size:11px;color:#475569;margin-top:4px;line-height:1.5}
+
+/* Province Map - Risk-based coloring */
+.map-container{position:relative;width:100%;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #E2E8F0}
+.map-container svg{width:100%;height:auto;display:block}
+.map-container svg .prov-path{cursor:pointer;transition:all .25s}
+.map-container svg .prov-path:hover{opacity:.8;stroke-width:2.5;filter:brightness(.95)}
+.map-container svg .prov-path.selected{stroke:#1E40AF;stroke-width:3;opacity:.85}
+.map-container svg .prov-label{font-size:8.5px;font-weight:600;pointer-events:none;text-anchor:middle;dominant-baseline:central}
+.map-container svg .count-badge{cursor:pointer;transition:all .25s;opacity:.92}
+.map-container svg .count-badge:hover{opacity:1;r:attr(r)}
+.map-container svg .count-text{font-size:7px;fill:#fff;font-weight:700;pointer-events:none;text-anchor:middle;dominant-baseline:central}
+.map-container svg .inset-box{fill:#F8FAFC;stroke:#CBD5E1;stroke-width:1}
+.map-container svg .inset-label{font-size:7px;fill:#94A3B8;text-anchor:middle;font-weight:600}
+.map-legend{display:flex;gap:14px;justify-content:center;margin-top:12px;flex-wrap:wrap;font-size:11px;color:#64748B;align-items:center}
+.map-legend-item{display:flex;align-items:center;gap:5px}
+.map-legend-swatch{width:18px;height:12px;border-radius:3px;display:inline-block;border:1px solid}
+.map-legend-badge{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700}
+
+/* Category summary */
+.cat-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.cat-card{padding:12px;border-radius:8px;border:1px solid #E2E8F0;text-align:center;cursor:pointer;transition:all .2s}
+.cat-card:hover{border-color:#93C5FD;transform:translateY(-1px)}
+.cat-card .cat-num{font-size:24px;font-weight:800;display:block}
+.cat-card .cat-name{font-size:12px;color:#64748B;margin-top:2px}
+.cat-card .cat-trend{font-size:10px;margin-top:4px;padding:1px 6px;border-radius:10px;display:inline-block}
+
+/* Timeline View */
+.timeline-item{display:flex;gap:0;margin-bottom:0}
+.timeline-year{width:72px;text-align:right;padding:20px 12px 20px 0;font-size:18px;font-weight:800;color:#1E40AF;flex-shrink:0}
+.timeline-dot-line{display:flex;flex-direction:column;align-items:center;width:36px;flex-shrink:0}
+.timeline-dot{width:14px;height:14px;border-radius:50%;background:#1E40AF;border:3px solid #BFDBFE;flex-shrink:0;margin-top:24px;z-index:2}
+.timeline-line{width:2px;background:#CBD5E1;flex:1;margin-top:-2px}
+.timeline-item:last-child .timeline-line{display:none}
+.timeline-content{flex:1;padding:12px 0 28px 8px}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+/* Month sub-group inside recent year */
+.month-group{margin-bottom:20px;position:relative}
+.month-group:last-child{margin-bottom:0}
+.month-label{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;padding:4px 14px;background:#EFF6FF;border-radius:20px;font-size:13px;font-weight:700;color:#1E40AF;border:1px solid #BFDBFE}
+.month-label .month-count{font-size:11px;font-weight:400;color:#64748B;margin-left:2px}
+.timeline-year.expanded{background:linear-gradient(180deg,#EFF6FF 0%,#fff 100%);border-radius:8px 0 0 8px;padding:16px 10px 16px 0}
+.policy-card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:14px;cursor:pointer;transition:all .25s}
+.policy-card:hover{border-color:#93C5FD;transform:translateY(-2px)}
+.card-header{display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.level-badge{color:#fff;padding:2px 9px;border-radius:4px;font-size:10px;font-weight:600}
+.cat-badge{color:#fff;padding:2px 9px;border-radius:4px;font-size:10px;font-weight:600}
+.type-text{font-size:11px;color:#94A3B8}
+.card-title{font-size:14px;font-weight:700;color:#0F172A;margin-bottom:3px;line-height:1.4}
+.card-issuer{font-size:11px;color:#64748B;margin-bottom:6px}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap}
+.tag{background:#F1F5F9;color:#475569;padding:1px 7px;border-radius:3px;font-size:10px}
+.card-hint{font-size:10px;color:#94A3B8;margin-top:6px;text-align:right}
+
+/* Table View */
+.table-wrap{display:none;overflow-x:auto;background:#fff;border-radius:10px;border:1px solid #E2E8F0}
+.policy-table{width:100%;border-collapse:collapse;font-size:12px}
+.policy-table th{background:#F1F5F9;padding:10px 8px;text-align:left;font-weight:600;position:sticky;top:0;white-space:nowrap;border-bottom:2px solid #CBD5E1}
+.policy-table td{padding:8px;border-bottom:1px solid #F1F5F9;vertical-align:top}
+.policy-table tr:hover{background:#F8FAFC}
+.td-date{white-space:nowrap;font-weight:500;color:#1E40AF}
+.td-type{white-space:nowrap;color:#64748B}
+.td-title{min-width:180px}
+.td-dept{font-size:11px;color:#94A3B8}
+.td-summary{max-width:260px;color:#475569;font-size:11px}
+.level-badge-sm,.cat-badge-sm{color:#fff;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;white-space:nowrap}
+.tag-sm{background:#F1F5F9;color:#475569;padding:1px 5px;border-radius:3px;font-size:9px;display:inline-block;margin:1px}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;max-width:660px;width:100%;max-height:80vh;overflow-y:auto;padding:28px;position:relative}
+.modal-close{position:absolute;top:14px;right:14px;background:#F1F5F9;border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:#E2E8F0}
+.modal h2{font-size:18px;margin-bottom:14px;padding-right:36px}
+.modal-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.modal-meta span{padding:2px 9px;border-radius:4px;font-size:11px;font-weight:500}
+.modal-body{font-size:13px;line-height:1.8;color:#334155}
+.modal-tags{margin-top:14px;display:flex;gap:5px;flex-wrap:wrap}
+
+.footer{text-align:center;padding:24px;color:#94A3B8;font-size:11px;border-top:1px solid #E2E8F0;margin-top:24px}
+@media(max-width:768px){
+  .header{padding:24px 16px 18px}.header h1{font-size:18px}
+  .dash-grid{grid-template-columns:1fr}
+  .stats-row{gap:8px}.stat-box{padding:6px 10px;min-width:60px}
+  .stat-num{font-size:18px}
+  .timeline-year{width:52px;font-size:15px;padding:14px 6px 14px 0}
+  .month-label{font-size:12px;padding:3px 10px}
+  .month-group{margin-bottom:14px}
+  .cards-grid{grid-template-columns:1fr}
+  .container{padding:14px 10px}
+  .map-container svg .prov-label{font-size:7px}
+}
+</style></head><body>
+
+<div class="header">
+  <h1>中国人力资源 · 税务 · 社保 · 合规 政策监控看板</h1>
+  <div class="sub">中央到地方政策法规全览 + 每日动态监控（2007–2026）</div>
+  <div class="date-badge" id="todayDate">--</div>
+  <div id="refreshStatus" style="font-size:11px;opacity:.85;margin-top:6px"></div>
+  <div class="keywords">
+    <span class="kw">人力资源</span><span class="kw">税务合规</span><span class="kw">社保政策</span>
+    <span class="kw">灵活用工</span><span class="kw">劳务派遣</span><span class="kw">合规监控</span>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><span class="stat-num">115</span><span class="stat-label">政策总数</span></div>
+    <div class="stat-box ok"><span class="stat-num">2</span><span class="stat-label">本周新增</span></div>
+    <div class="stat-box warn"><span class="stat-num">5</span><span class="stat-label">即将生效</span></div>
+    <div class="stat-box alert"><span class="stat-num">2</span><span class="stat-label">合规预警</span></div>
+    <div class="stat-box"><span class="stat-num">31</span><span class="stat-label">覆盖省份</span></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="view-btn active" onclick="switchView('dashboard')">监控看板</button>
+  <button class="view-btn" onclick="switchView('timeline')">时间轴</button>
+  <button class="view-btn" onclick="switchView('table')">表格</button>
+  <span class="sep">|</span>
+  <button class="filter-btn active" data-filter="all" onclick="filterLevel('all',this)">全部层级</button>
+  <button class="filter-btn" data-filter="中央" onclick="filterLevel('中央',this)">中央</button>
+  <button class="filter-btn" data-filter="地方" onclick="filterLevel('地方',this)">地方</button>
+  <span class="sep">|</span>
+  <button class="filter-btn active" data-cat="all" onclick="filterCat('all',this)">全品类</button>
+  <button class="filter-btn" data-cat="派遣" onclick="filterCat('派遣',this)" style="color:#3B82F6">派遣</button>
+  <button class="filter-btn" data-cat="外包" onclick="filterCat('外包',this)" style="color:#8B5CF6">外包</button>
+  <button class="filter-btn" data-cat="灵活用工" onclick="filterCat('灵活用工',this)" style="color:#10B981">灵活用工</button>
+  <button class="filter-btn" data-cat="薪税" onclick="filterCat('薪税',this)" style="color:#F59E0B">薪税</button>
+  <button class="filter-btn" data-cat="社保" onclick="filterCat('社保',this)" style="color:#EF4444">社保</button>
+  <button class="filter-btn" data-cat="人力资源" onclick="filterCat('人力资源',this)" style="color:#0EA5E9">人力资源</button>
+</div>
+
+<div class="container">
+
+<!-- ========== DASHBOARD VIEW ========== -->
+<div id="dashboardView">
+  <div class="dash-grid">
+
+    <!-- Alert Feed -->
+    <div class="dash-section" style="grid-column:1/-1">
+      <div class="dash-title"><span class="icon" style="background:#1E40AF">!</span>今日监控动态</div>
+      <div class="alert-list" id="alertFeed"></div>
+    </div>
+
+    <!-- Province Map -->
+    <div class="dash-section">
+      <div class="dash-title"><span class="icon" style="background:#059669">&#9678;</span>地方政策风险地图 <span id="mapProvinceLabel" style="font-size:11px;color:#64748B;font-weight:400;margin-left:auto">点击省份筛选</span></div>
+      <div class="map-container" id="provinceMap"></div>
+      <div class="map-legend">
+        <div class="map-legend-item"><span class="map-legend-swatch" style="background:#FEE2E2;border-color:#EF4444"></span>高风险</div>
+        <div class="map-legend-item"><span class="map-legend-swatch" style="background:#FEF3C7;border-color:#F59E0B"></span>中风险</div>
+        <div class="map-legend-item"><span class="map-legend-swatch" style="background:#D1FAE5;border-color:#10B981"></span>低风险</div>
+        <div class="map-legend-item"><span class="map-legend-swatch" style="background:#F1F5F9;border-color:#CBD5E1"></span>暂无数据</div>
+        <span style="color:#CBD5E1">|</span>
+        <div class="map-legend-item"><span class="map-legend-badge" style="background:#EF4444">3</span>政策数量</div>
+      </div>
+    </div>
+
+    <!-- Category Summary -->
+    <div class="dash-section">
+      <div class="dash-title"><span class="icon" style="background:#8B5CF6">&#9632;</span>品类分布概览</div>
+      <div class="cat-summary" id="catSummary"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== TIMELINE VIEW ========== -->
+<div id="timelineView" style="display:none">
+</div>
+
+<!-- ========== TABLE VIEW ========== -->
+<div id="tableView" class="table-wrap">
+  <table class="policy-table">
+    <thead><tr><th>日期</th><th>层级</th><th>品类</th><th>类型</th><th>文件名称</th><th>核心内容</th><th>标签</th></tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    <h2 id="mTitle"></h2>
+    <div class="modal-meta" id="mMeta"></div>
+    <div class="modal-body" id="mBody"></div>
+    <div class="modal-tags" id="mTags"></div>
+  </div>
+</div>
+
+<div class="footer">中国人力资源·税务·社保·合规 政策监控看板 | 数据来源：国务院、人社部、财政部、商务部、国税总局、全国总工会、各省市人社厅/税务局等公开资料 | 更新至2026年9月 | 最后刷新：<span id="footerLastUpdated">--</span></div>
+
+<script>
+var CAT_COLOR={'派遣':'#3B82F6','外包':'#8B5CF6','灵活用工':'#10B981','薪税':'#F59E0B','社保':'#EF4444','人力资源':'#0EA5E9'};
+var curLv='all',curCat='all',curProv='all';
+var lastUpdated='2026-09-03'; // 看板最后刷新日期（每日定时任务更新 · 2026-09-03）
+var todayNewCount=2; // 今日新增政策数量（每日定时任务更新 · 今日 2 条）
+
+/* ========== POLICY DATA ========== */
+var policies=[
+{date:'2007-06-29',level:'中央',category:'派遣',type:'法律',title:'《中华人民共和国劳动合同法》',dept:'全国人大常委会',summary:'首次以法律形式专节规范劳务派遣（第五十七至六十七条），明确派遣单位设立条件、派遣协议、同工同酬等，为劳务派遣用工奠定法律基础。',tags:['劳务派遣','同工同酬','法律','全国人大常委会'],provinces:[]},
+{date:'2007-08-30',level:'中央',category:'灵活用工',type:'法律',title:'《中华人民共和国就业促进法》',dept:'全国人大常委会',summary:'首次在法律层面鼓励灵活就业和非全日制用工形式，第二十三条要求各级政府统筹做好城镇新增劳动力和农业富余劳动力转移就业工作。',tags:['灵活就业','非全日制','全国人大常委会'],provinces:[]},
+{date:'2008-09-18',level:'中央',category:'派遣',type:'行政法规',title:'《劳动合同法实施条例》',dept:'国务院',summary:'细化劳务派遣操作规范，明确派遣单位不得以非全日制形式招用被派遣劳动者（第三十条），规范派遣协议内容和期限。',tags:['劳务派遣','实施条例','国务院'],provinces:[]},
+{date:'2009-01',level:'中央',category:'外包',type:'国务院文件',title:'《关于促进服务外包产业发展问题的复函》',dept:'国务院办公厅',summary:'国务院层面首个服务外包专项文件，对服务外包企业给予税收优惠（技术先进型服务企业减按15%征收企业所得税）、财政资金支持等政策，推动人力资源外包等服务外包业态发展。',tags:['服务外包','税收优惠','国务院'],provinces:[]},
+{date:'2010-10-28',level:'中央',category:'社保',type:'法律',title:'《中华人民共和国社会保险法》',dept:'全国人大常委会',summary:'首次以法律形式明确灵活就业人员可参加职工基本养老保险和职工基本医疗保险（第十条、第二十三条），为灵活就业人员社会保障提供法律依据。2011年7月1日起实施。',tags:['社会保险','灵活就业','养老','医疗','全国人大常委会'],provinces:[]},
+{date:'2012-12-28',level:'中央',category:'派遣',type:'法律',title:'《劳动合同法修正案》',dept:'全国人大常委会',summary:'专门修正劳务派遣：明确派遣为"补充形式"，仅限"三性"岗位；提高派遣单位注册资本至200万元；强化同工同酬。2013年7月1日起实施。',tags:['三性岗位','同工同酬','修正案','全国人大常委会'],provinces:[]},
+{date:'2014-01-24',level:'中央',category:'派遣',type:'部门规章',title:'《劳务派遣暂行规定》',dept:'人社部',summary:'核心规定：派遣用工比例不超过10%；"三性"岗位定义（临时性不超过6个月、辅助性需职代会讨论、替代性不超过1年）；两年过渡期至2016年3月。劳务派遣领域最核心的操作规范。',tags:['10%比例','三性岗位','核心法规','人社部'],provinces:[]},
+{date:'2014-03',level:'地方',category:'派遣',type:'地方规范',title:'各地劳务派遣过渡实施方案',dept:'北京/上海/广东/江苏等',summary:'北京、上海、广东、江苏等用工密集地区先后发布过渡方案，指导企业两年内将派遣比例降至10%以内，部分地方对超比例企业采取备案管理。',tags:['地方过渡','备案管理'],provinces:['北京','上海','广东','江苏']},
+{date:'2015-01',level:'中央',category:'外包',type:'国务院文件',title:'《关于促进服务外包产业加快发展的意见》',dept:'国务院',summary:'系统部署服务外包产业发展，提出培育"专、精、特、新"中小外包企业，鼓励企业打破"大而全"模式，将非核心业务外包。对技术先进型服务企业给予税收优惠和财政支持。',tags:['服务外包','税收优惠','国务院','商务部'],provinces:[]},
+{date:'2015-03',level:'中央',category:'派遣',type:'部门规章',title:'《劳务派遣行政许可实施办法》完善',dept:'人社部',summary:'进一步完善劳务派遣行政许可制度，要求经营劳务派遣业务须取得行政许可，规范许可条件、程序和监管措施。',tags:['行政许可','准入管理','人社部'],provinces:[]},
+{date:'2018-06-29',level:'中央',category:'人力资源',type:'行政法规',title:'《人力资源市场暂行条例》',dept:'国务院',summary:'首部人力资源市场行政法规，规范人力资源服务机构（含外包机构）的设立和经营行为，区分职业中介、劳务派遣、服务外包等业态。2018年10月1日起实施。',tags:['人力资源市场','服务机构','外包监管','国务院令第700号'],provinces:[]},
+{date:'2019-04-01',level:'中央',category:'社保',type:'国务院文件',title:'《降低社会保险费率综合方案》',dept:'国务院办公厅',summary:'降低养老保险单位缴费比例至16%，调整社保缴费基数上下限计算口径，统一灵活就业人员缴费基数范围。减轻企业用工成本，惠及灵活就业人员参保。',tags:['社保降费','缴费基数','灵活就业参保','国务院办公厅'],provinces:[]},
+{date:'2020-07-14',level:'中央',category:'灵活用工',type:'国务院文件',title:'《关于支持多渠道灵活就业的意见》',dept:'国务院办公厅',summary:'国务院层面首个灵活就业专门文件。拓宽灵活就业渠道（个体经营、非全日制、新就业形态），优化创业环境，加大社保补贴，开展职业伤害保障探索。',tags:['国办发〔2020〕27号','灵活就业','疫情背景'],provinces:[]},
+{date:'2020-09',level:'地方',category:'灵活用工',type:'地方文件',title:'《广东省灵活就业人员服务管理办法（试行）》',dept:'广东省人社厅',summary:'全国首个省级灵活就业服务管理办法，首次以法规形式界定灵活就业人员范围（个体经营者、非全日制从业人员、新就业形态人员），取消户籍参保门槛。',tags:['广东','省级首创','人社局'],provinces:['广东']},
+{date:'2020-10',level:'地方',category:'灵活用工',type:'地方文件',title:'《广东省支持多渠道灵活就业若干措施》',dept:'广东省人民政府',summary:'贯彻国办发27号文，提出发展新就业形态、鼓励个体经营、增加非全日制就业机会、创新用工模式（用工余缺调剂）等20条措施。',tags:['广东','用工创新','人社局'],provinces:['广东']},
+{date:'2020-12',level:'地方',category:'灵活用工',type:'地方文件',title:'《关于鼓励和支持多渠道灵活就业的实施意见》',dept:'湖北省人民政府办公厅',summary:'中部地区率先落实灵活就业支持政策，鼓励灵活就业形式、优化创业环境、提供社保补贴。',tags:['湖北','多渠道'],provinces:['湖北']},
+{date:'2020',level:'地方',category:'薪税',type:'地方文件',title:'各地委托代征与个税核定政策',dept:'天津/海南/江西/重庆等税务局',summary:'天津、海南、江西、重庆等地税务局针对灵活用工平台发布委托代征公告，允许平台代扣代缴个税、代开发票，部分地区对经营所得实行核定征收。为灵活用工薪税合规提供地方路径。',tags:['委托代征','个税核定','地方税务局'],provinces:['天津','海南','江西','重庆']},
+{date:'2021-07-12',level:'中央',category:'灵活用工',type:'部门文件',title:'《关于切实维护新就业形态劳动者劳动保障权益的意见》',dept:'全国总工会',summary:'全国总工会专项发文，要求推动新就业形态劳动者加入工会组织，开展心理健康教育，提升劳动者维权能力，启动"新就业形态劳动者入会集中行动"。',tags:['全国总工会','入会','维权'],provinces:[]},
+{date:'2021-07-16',level:'中央',category:'灵活用工',type:'部门文件',title:'《关于维护新就业形态劳动者劳动保障权益的指导意见》',dept:'人社部等八部门',summary:'里程碑级文件。首次定义"新就业形态劳动者"，提出三种用工关系分类（劳动关系、不完全劳动关系、民事关系），要求平台企业承担用工主体责任。人社部发〔2021〕56号。',tags:['八部门','三种关系','里程碑','人社部'],provinces:[]},
+{date:'2021-07-26',level:'中央',category:'灵活用工',type:'部门文件',title:'《关于落实网络餐饮平台责任切实维护外卖送餐员权益的指导意见》',dept:'市场监管总局等七部门',summary:'专门针对外卖行业，要求平台合理确定订单数量、劳动强度、配送时间，完善薪酬制度和职业伤害保障，禁止最严算法控制劳动节奏。',tags:['外卖','算法监管','七部门'],provinces:[]},
+{date:'2021-08',level:'中央',category:'灵活用工',type:'国务院文件',title:'《"十四五"就业促进规划》',dept:'国务院',summary:'首次将灵活就业和新就业形态纳入国家五年规划，提出"破除各种不合理限制，支持多渠道灵活就业"，完善灵活就业人员社保制度和公共服务。国发〔2021〕14号。',tags:['十四五','国家规划','国务院'],provinces:[]},
+{date:'2021-09',level:'中央',category:'社保',type:'部门文件',title:'《关于开展新就业形态就业人员职业伤害保障试点工作的通知》',dept:'人社部等十部门',summary:'正式启动职业伤害保障制度设计，以出行、外卖、即时配送、同城货运四大行业为重点，拟在7省市先行试点。创新"按单计费、每单必保"模式。',tags:['职业伤害','试点','按单计费','人社部'],provinces:[]},
+{date:'2021-11',level:'中央',category:'人力资源',type:'部门文件',title:'《关于推进新时代人力资源服务业高质量发展的意见》',dept:'人社部/发改委/财政部/商务部/市场监管总局',summary:'五部门联合发文，明确到2025年人力资源服务业规模目标，鼓励发展灵活用工、服务外包、在线培训等新业态，推动数字技术赋能人力资源服务。人社部发〔2021〕89号。',tags:['人力资源服务','五部门','服务业','商务部'],provinces:[]},
+{date:'2021-12',level:'中央',category:'灵活用工',type:'部门文件',title:'《关于推动平台经济规范健康持续发展的若干意见》',dept:'发改委等九部门',summary:'从平台经济治理角度要求落实平台企业责任、保障劳动者权益，部署平台灵活就业人员职业伤害保障试点，加强算法监管。发改高技〔2021〕1872号。',tags:['平台经济','九部门','算法治理'],provinces:[]},
+{date:'2021',level:'地方',category:'灵活用工',type:'地方文件',title:'《关于优化新就业形态劳动用工服务的指导意见》',dept:'浙江省人社厅',summary:'浙江率先探索新就业形态用工服务，优化人力资源服务，为新就业形态劳动者提供个性化职业介绍和创业服务，探索灵活用工登记制度。浙人社发〔2021〕56号。',tags:['浙江','用工服务','登记制度'],provinces:['浙江']},
+{date:'2022-07-01',level:'中央',category:'社保',type:'制度试点',title:'新就业形态就业人员职业伤害保障试点启动',dept:'人社部',summary:'职业伤害保障试点正式启动，在北京、上海、江苏、广东、海南、重庆、四川7省市实施。创新"按单计费、每单必保"工伤保险新模式。',tags:['试点启动','7省市','工伤保险'],provinces:['北京','上海','江苏','广东','海南','重庆','四川']},
+{date:'2022',level:'地方',category:'灵活用工',type:'地方立法',title:'《广东省灵活就业条例》',dept:'广东省人大常委会',summary:'全国首部灵活就业地方性法规，以法规形式明确灵活就业人员范围和权益保障，规范灵活用工平台行为，建立社保参保和转移接续制度。',tags:['广东','首部地方法规'],provinces:['广东']},
+{date:'2022',level:'地方',category:'灵活用工',type:'地方文件',title:'多省市新就业形态劳动者权益保障实施意见',dept:'辽宁/重庆/江西/内蒙古等',summary:'贯彻人社部56号文，各地出台地方实施意见，细化三种用工关系认定标准和权益保障措施。',tags:['多地落地','三种关系'],provinces:['辽宁','重庆','江西','内蒙古']},
+{date:'2022',level:'地方',category:'社保',type:'地方文件',title:'灵活就业人员社保补贴政策',dept:'宁夏/各省人社厅+财政厅',summary:'各地落实就业困难人员及高校毕业生灵活就业社会保险补贴，对以灵活就业身份参保的人员给予实际缴费2/3的社保补贴，资金由中央就业补助资金和地方财政共同承担。',tags:['社保补贴','就业补助','财政部','人社局'],provinces:['宁夏']},
+{date:'2023',level:'地方',category:'灵活用工',type:'地方文件',title:'湖南省落实外卖送餐员权益实施方案',dept:'湖南省市场监管局等',summary:'细化外卖送餐员劳动报酬、工作时间、职业安全保障等具体标准，建立平台企业定期报告制度。',tags:['湖南','外卖','平台报告'],provinces:['湖南']},
+{date:'2023',level:'中央',category:'灵活用工',type:'部门文件',title:'新就业形态劳动者权益保障专项行动',dept:'人社部',summary:'部署推进专项行动，推动平台企业用工合规自查，扩大职业伤害保障试点范围，完善新就业形态劳动关系认定标准。',tags:['专项行动','合规自查','人社部'],provinces:[]},
+{date:'2024-07',level:'中央',category:'社保',type:'党的文件',title:'二十届三中全会《决定》',dept:'中共中央',summary:'明确要求"健全灵活就业人员、农民工、新就业形态人员社保制度，扩大失业、工伤、生育保险覆盖面，全面取消在就业地参保户籍限制"，研究同新业态相适应的税收制度。',tags:['三中全会','社保改革','户籍取消','税制改革'],provinces:[]},
+{date:'2024-09',level:'中央',category:'社保',type:'部门文件',title:'《企业职工基本养老保险病残津贴暂行办法》',dept:'人社部/财政部',summary:'扩大养老保险保障范围，灵活就业人员纳入病残津贴保障对象。2025年1月1日起实施，惠及广大灵活就业参保人员。人社部发〔2024〕72号。',tags:['病残津贴','养老保险','人社部','财政部'],provinces:[]},
+{date:'2024-12',level:'中央',category:'薪税',type:'法律',title:'《中华人民共和国增值税法》',dept:'全国人大常委会',summary:'增值税法正式通过，2026年1月1日起施行。对灵活用工领域的"反向开票"、劳务报酬增值税等作出新的法律规范，影响灵活用工平台发票管理和增值税处理方式。',tags:['增值税法','反向开票','发票管理','全国人大常委会'],provinces:[]},
+{date:'2024',level:'地方',category:'灵活用工',type:'地方文件',title:'辽宁/江西等新就业形态权益保障若干措施',dept:'辽宁省/江西省人社厅等',summary:'进一步细化平台责任、职业伤害保障、工会维权等具体措施。',tags:['辽宁','江西','权益保障'],provinces:['辽宁','江西']},
+{date:'2025-06',level:'中央',category:'薪税',type:'行政法规',title:'《互联网平台企业涉税信息报送规定》',dept:'国务院/国税总局',summary:'国务院令第810号，要求互联网平台企业向税务机关报送平台内从业人员的交易和收入信息，为灵活用工薪税合规建立数据基础。配套国税总局第15号公告细化报送规则。',tags:['涉税信息','国务院令','国税总局','平台报送'],provinces:[]},
+{date:'2025-07',level:'中央',category:'薪税',type:'部门文件',title:'《关于互联网平台企业为平台内从业人员办理扣缴申报、代办申报若干事项的公告》',dept:'国税总局',summary:'国税总局2025年第16号公告，明确互联网平台企业为从业人员办理个税扣缴申报和代办申报的操作规范，灵活用工人员取得收入的税务处理更加清晰。劳务报酬按20%-40%预扣率，经营所得可核定征收。',tags:['扣缴申报','个税','国税总局2025年第16号','薪税合规'],provinces:[]},
+{date:'2025-10-29',level:'中央',category:'灵活用工',type:'中央文件',title:'《关于加强新就业群体服务管理的意见》',dept:'中办、国办',summary:'最高层级系统性文件。将新就业群体服务管理提升至政治高度，从党建引领、权益保障、公共服务、职业发展等方面全面部署，要求加快推进相关法律法规和制度建设。',tags:['中办国办','最高层级','党建引领'],provinces:[]},
+{date:'2025',level:'中央',category:'社保',type:'制度试点',title:'职业伤害保障试点扩面',dept:'人社部',summary:'试点进一步扩大覆盖范围，推动更多省份纳入，累计参保超过2700万人。2026年7月1日起扩展至全国31省份。',tags:['试点扩面','2700万参保','全国推开'],provinces:[]},
+{date:'2025',level:'地方',category:'薪税',type:'地方文件',title:'各地灵活用工个税核定与征管细则',dept:'各省税务局',summary:'在国税总局框架下，各省税务局细化灵活用工个税征管规则，规范委托代征资质管理，收紧核定征收范围，推动"经营所得"与"劳务报酬"的准确定性。',tags:['个税征管','委托代征','各省税务局'],provinces:[]},
+{date:'2026-01',level:'中央',category:'薪税',type:'法律',title:'《增值税法》正式施行',dept:'全国人大常委会',summary:'增值税法2026年1月1日起施行，对灵活用工平台的发票管理、增值税处理产生直接影响。"反向开票"制度确立，平台企业可为从业人员代开发票。',tags:['增值税法施行','反向开票','薪税'],provinces:[]},
+{date:'2026-03',level:'中央',category:'灵活用工',type:'规划纲要',title:'《"十五五"规划纲要》',dept:'全国人大',summary:'明确提出"推动灵活就业、新就业形态健康发展"，"健全灵活就业、新就业形态劳动者权益保障制度"，灵活就业正式纳入国家中长期发展战略。',tags:['十五五','国家纲要'],provinces:[]},
+{date:'2026-03-19',level:'地方',category:'灵活用工',type:'地方立法',title:'《关于加强新就业形态劳动者权益保障的决定》',dept:'深圳市人大常委会',summary:'深圳率先以人大决定形式提供法治保障，明确平台企业用工主体责任，建立劳动报酬保障、职业安全、社保参保等制度。',tags:['深圳','人大决定','地方法治'],provinces:['广东']},
+{date:'2026-04',level:'地方',category:'灵活用工',type:'地方文件',title:'《关于推动灵活就业"向新向智"发展的意见》',dept:'山东省人社厅等18部门',summary:'山东18部门联合发文，拓展灵活就业新空间，推动数字化赋能灵活就业服务，纳入民生实事项目。',tags:['山东','18部门','数字化'],provinces:['山东']},
+{date:'2026-06',level:'中央',category:'灵活用工',type:'国务院文件',title:'《实施就业优先战略"十五五"规划》',dept:'国务院',summary:'国务院层面首个就业优先战略五年规划，系统部署灵活就业和新就业形态的制度保障，构建高质量充分就业体系。',tags:['就业优先','十五五规划','国务院'],provinces:[]},
+{date:'2026',level:'中央',category:'灵活用工',type:'制度推进',title:'《新就业形态劳动者权益保障办法》（推进中）',dept:'人社部',summary:'人社部报告披露将抓紧出台该办法，以部门规章形式系统规范劳动关系认定、权益保障、争议处理，预计成为新就业形态领域首部专门规章。',tags:['权益保障办法','部门规章','推进中'],provinces:[]},
+{date:'2026-04-30',level:'中央',category:'社保',type:'法律',title:'《中华人民共和国社会救助法》',dept:'全国人大常委会',summary:'社会保障领域基础性法律，共7章78条，涵盖总则、救助对象和措施、救助程序、社会力量参与、救助监督和保障、法律责任等，为困难群众基本生活提供法治保障。2026年7月1日起施行。',tags:['社会救助','基础性法律','全国人大常委会'],provinces:[]},
+{date:'2026-05-10',level:'中央',category:'人力资源',type:'部门规章',title:'《超龄劳动者基本权益保障暂行规定》',dept:'人社部/国家卫健委/应急部/税务总局/国家医保局',summary:'首部专门保护超龄劳动者权益的部门规章（第56号令），明确用人单位须与超龄劳动者订立书面用工协议，保障劳动报酬、休息休假、职业安全卫生等权益，强制参加工伤保险。2026年7月1日起施行。',tags:['超龄劳动者','权益保障','五部门','第56号令'],provinces:[]},
+{date:'2026-07-01',level:'中央',category:'社保',type:'部门文件',title:'《关于扩大新就业形态人员职业伤害保障试点的通知》',dept:'人社部/发改委/财政部/交通运输部/商务部/税务总局/市场监管总局/金融监管总局/全国总工会',summary:'九部门联合发文，职业伤害保障试点自7月1日起向全国31个省份和新疆生产建设兵团全面推开。采取"按日参保、按单计费、月度缴费、总参总保"模式，覆盖出行、即时配送、同城货运三大行业，新增滴滴出行、顺丰同城等平台。',tags:['职业伤害保障','全国推开','九部门','按单计费'],provinces:[]},
+{date:'2026-07',level:'地方',category:'人力资源',type:'地方文件',title:'《甘肃省就业促进"十五五"规划》',dept:'甘肃省人民政府办公厅',summary:'系统谋划甘肃省五年就业发展蓝图，目标城镇新增就业累计达140万人以上，城镇调查失业率控制在5.5%左右，推动灵活就业群体规模扩大，强化就业优先政策。',tags:['甘肃','十五五','就业促进','灵活就业'],provinces:['甘肃']},
+{date:'2025-12',level:'地方',category:'社保',type:'地方文件',title:'《广东省灵活就业人员参加失业保险办法》',dept:'广东省人社厅/财政厅/税务局',summary:'以粤人社规〔2025〕50号文发布，覆盖依托平台就业且未建立劳动关系者及无雇工个体工商户，自愿参保、按月缴费，缴费基数按参保前12个月平均收入核定，明确平台关闭等非自愿中断情形可申领失业保险待遇。优先在大湾区9市及汕头落地。',tags:['广东','失业保险','灵活就业','大湾区'],provinces:['广东']},
+{date:'2026-01',level:'地方',category:'派遣',type:'地方规范',title:'《劳务派遣服务规范》（DB44/T 2805-2026）',dept:'广东省市场监督管理局',summary:'广东省劳务派遣领域地方标准，涵盖术语定义、总体要求、服务流程等，要求派遣机构须与员工签订两年以上固定期限劳动合同，跨地区派遣按用工地标准支付薪酬，工伤须30日内申请认定，用工台账保存期不少于3年。2026年4月9日起实施。',tags:['广东','地方标准','派遣服务','DB44/T2805'],provinces:['广东']},
+{date:'2026-06-12',level:'地方',category:'社保',type:'地方文件',title:'《关于提高就业困难人员灵活就业社会保险补贴标准的通知》',dept:'安徽省人社厅/财政厅',summary:'皖人社秘〔2026〕74号，将就业困难人员灵活就业社保补贴标准统一提高至每人每月500元（不超过实际缴费的2/3），离校两年内未就业高校毕业生参照执行。要求优化申请流程、严格资格审核，虚报冒领依法追责。2026年7月1日起实施。',tags:['安徽','社保补贴','500元','就业困难人员'],provinces:['安徽']},
+{date:'2026-05-22',level:'中央',category:'社保',type:'国务院文件',title:'《关于推行常住地提供基本公共服务的实施意见》',dept:'国务院',summary:'要求全面取消在就业地参加职工社会保险的户籍限制，健全农民工、灵活就业人员、新就业形态人员参加社会保险制度，稳步推进灵活就业人员参加住房公积金制度，强化就业基本公共服务和创业扶持。推动基本公共服务均等化，覆盖就业、社保、住房等多领域。',tags:['常住地','户籍改革','公共服务','国务院'],provinces:[]},
+{date:'2025-12-25',level:'中央',category:'薪税',type:'行政法规',title:'《中华人民共和国增值税法实施条例》',dept:'国务院',summary:'国务院令第826号，配套增值税法自2026年1月1日起施行。明确自然人为小规模纳税人、支付价款的境内单位为扣缴义务人，细化零税率适用情形、进项抵扣与销售额核算机制、发票开具和退免税等征管流程，对灵活用工平台发票管理和增值税处理产生直接影响。',tags:['增值税法实施条例','国务院令第826号','扣缴义务人','自然人'],provinces:[]},
+{date:'2026-04-30',level:'中央',category:'灵活用工',type:'国务院文件',title:'《稳岗扩容提质行动方案》',dept:'国务院就业促进和劳动保护工作领导小组',summary:'系统部署高质量充分就业，稳定重点行业用工、挖掘多渠道就业潜力、提升就业质量，明确提出制定《新就业形态劳动者权益保障办法》，强化劳动者权益保障，将就业指标纳入重大政策和项目评估体系。',tags:['稳岗扩容','新就业形态','权益保障','国务院'],provinces:[]},
+{date:'2026-05-29',level:'中央',category:'薪税',type:'部门文件',title:'《关于个人所得税有关征管事项的公告》',dept:'国家税务总局',summary:'国家税务总局公告2026年第12号，明确资源回收领域自然人反向开票经营所得个税预缴率（年销售额不超60万元部分减按0.25%预缴，超额按0.5%），以及换购住房退还个税政策（2026年至2027年底），为反向开票机制提供个税征管操作依据。',tags:['反向开票','个税征管','第12号公告','资源回收'],provinces:[]},
+{date:'2026-06-22',level:'中央',category:'人力资源',type:'部门文件',title:'《关于加快推进"人工智能＋人社"应用发展的实施意见》',dept:'人社部/发改委/工信部/国家数据局',summary:'人社部发〔2026〕40号，推动AI技术与人社业务深度融合，设定2026-2030年阶段性目标，拓展就业、社保、人才、劳动关系、人力资源服务及政务治理六大应用场景，构建职业分类知识图谱和求职招聘模型，搭建部省协同AI应用平台。',tags:['人工智能','人社应用','四部门','数字柜员'],provinces:[]},
+{date:'2026-05',level:'中央',category:'人力资源',type:'部门文件',title:'《关于开展2026年清理整顿人力资源市场秩序专项行动的通知》',dept:'国务院就业促进和劳动保护工作领导小组办公室',summary:'部署2026年4月至7月专项整顿行动，重点打击"假外包、真派遣"违规劳务派遣行为，治理"招转培（贷）"欺诈、虚假招录信息，规范网络招聘许可管理和线上信息发布，纠正各类就业歧视，维护人力资源市场秩序。',tags:['市场秩序','假外包真派遣','专项整顿','人力资源'],provinces:[]},
+{date:'2026-06-16',level:'地方',category:'社保',type:'地方文件',title:'《关于做好新就业形态人员职业伤害保障试点工作的通知》',dept:'吉林省人社厅等十部门',summary:'吉人社联〔2026〕25号，落实国家试点部署，明确2026年7月1日启动职业伤害保障试点，首批覆盖出行、即时配送、同城货运3个行业25家平台企业，建设省级集中信息系统，资金纳入工伤保险基金省级统筹，建立费率浮动机制，严格防止重复领取待遇。',tags:['吉林','职业伤害保障','试点落地','十部门'],provinces:['吉林']},
+{date:'2026-04-10',level:'地方',category:'社保',type:'地方文件',title:'《黑龙江省新就业形态人员职业伤害保障实施办法（试行）》',dept:'黑龙江省人社厅等十部门',summary:'明确2026年7月1日起启动职业伤害保障试点，覆盖出行、即时配送、同城货运三大领域25家平台企业。按行业差异化缴费：出行每单0.01元、即时配送每单0.07元或0.25元、同城货运每单0.18元。规范职业伤害确认情形、劳动能力鉴定流程及医疗伤残死亡待遇标准，引入商业保险机构参与经办。',tags:['黑龙江','职业伤害保障','缴费标准','实施办法'],provinces:['黑龙江']},
+{date:'2026-07',level:'地方',category:'社保',type:'地方文件',title:'《陕西省新就业形态人员职业伤害保障实施办法（试行）》',dept:'陕西省人社厅等十部门',summary:'7月1日起启动职业伤害保障试点，覆盖出行、即时配送、同城货运3个行业19家平台企业（曹操出行、滴滴、美团、饿了么、货拉拉等），平台全额出资、按单缴费、每单必保，待遇从工伤保险基金列支，引入商业保险经办。',tags:['陕西','职业伤害保障','试点落地','十部门'],provinces:['陕西']},
+{date:'2026-06-15',level:'地方',category:'社保',type:'地方文件',title:'《关于统筹城乡就业政策体系的若干措施》',dept:'河北省人社厅/发改委/农业农村厅',summary:'冀人社发〔2026〕8号，统筹城乡就业政策，第十四条明确扩大新就业形态从业人员职业伤害保障试点范围，7月1日起落实国家试点部署，覆盖出行、即时配送、同城货运行业平台企业。',tags:['河北','职业伤害保障','城乡就业','冀人社发'],provinces:['河北']},
+{date:'2026-04',level:'地方',category:'社保',type:'地方文件',title:'《关于做好新就业形态人员职业伤害保障试点工作的通知》',dept:'河南省人社厅等九部门',summary:'7月1日起启动职业伤害保障试点，覆盖出行、即时配送、同城货运3个行业12家平台企业（滴滴、美团、饿了么、UU跑腿、达达、货拉拉等）。首年执行固定缴费：出行每单0.01元、即时配送每单0.07元、同城货运每单0.18元，2028年起可上下浮动。',tags:['河南','职业伤害保障','试点落地','九部门'],provinces:['河南']},
+{date:'2025-12-25',level:'地方',category:'社保',type:'地方文件',title:'《关于开展新就业形态人员职业伤害保障试点工作的通知》',dept:'贵州省人社厅等九部门',summary:'九部门联合发文，2026年7月1日启动职业伤害保障试点，首批纳入曹操出行、美团等11家平台企业，覆盖出行、即时配送、同城货运行业。保费由平台全额承担，首年执行国家基准，次年起实施费率浮动机制，引入商业保险参与经办。',tags:['贵州','职业伤害保障','试点落地','九部门'],provinces:['贵州']},
+{date:'2026-06-05',level:'地方',category:'社保',type:'地方文件',title:'《关于开展新就业形态人员职业伤害保障试点工作的通知》',dept:'湖南省人社厅等九部门',summary:'湘人社规〔2026〕7号，九部门联合发文，7月1日起启动职业伤害保障试点，覆盖出行、即时配送、同城货运行业多家平台企业，按行业设定每单缴费基准额并建立动态调整机制，规范事故备案、伤害确认调查及劳动能力鉴定流程，明确跨省接单伤害发生地认定规则，引入商业保险参与经办。',tags:['湖南','职业伤害保障','试点落地','九部门'],provinces:['湖南']},
+{date:'2026-05',level:'地方',category:'社保',type:'地方文件',title:'《云南省新就业形态人员职业伤害保障实施办法（试行）》',dept:'云南省人社厅等九部门',summary:'九部门联合制定实施办法，7月1日启动职业伤害保障试点，首批纳入出行、即时配送、同城货运行业25家平台企业。个人不缴费，平台按单缴费、以支定收、收支平衡，禁止通过提高抽成转嫁负担。落实每单必保、每人必保，建立跨部门政企协同机制，集成伤害确认、能力鉴定和待遇发放"一件事"办理。',tags:['云南','职业伤害保障','实施办法','九部门'],provinces:['云南']},
+{date:'2025-07-16',level:'地方',category:'社保',type:'地方文件',title:'《关于做好新就业形态人员职业伤害保障试点工作的通知》',dept:'辽宁省人社厅等十一部门',summary:'辽人社规〔2025〕4号，十一部门联合发文，2025年7月起启动职业伤害保障试点，首批覆盖出行、即时配送、同城货运行业11家头部平台企业。确立按单定额缴费的参保机制，个人无需缴费，界定伤害确认情形与劳动能力鉴定程序，规定医疗、伤残及死亡各项待遇标准，引入商业保险机构参与经办。',tags:['辽宁','职业伤害保障','试点落地','十一部门'],provinces:['辽宁']},
+{date:'2026-06-22',level:'地方',category:'社保',type:'地方文件',title:'《关于做好新就业形态人员职业伤害保障试点扩围的通知》',dept:'湖北省人社厅/国家税务总局湖北省税务局等',summary:'鄂人社函〔2026〕78号，扩大试点平台企业范围，新增14家出行、配送及超市等平台，逐步吸纳省内符合条件的中小企业。规范参保缴费与待遇确认流程，协同税务部门优化社保征管系统，加快高频事项办理，扩大医疗费联网结算覆盖面，强化职业伤害预防。',tags:['湖北','职业伤害保障','试点扩围','鄂人社函'],provinces:['湖北']},
+{date:'2026-03-24',level:'地方',category:'社保',type:'地方文件',title:'《关于开展新疆新就业形态人员职业伤害保障试点工作的通知》',dept:'新疆维吾尔自治区人社厅等九部门/新疆生产建设兵团',summary:'兵地一体化试点，2026年7月1日同步启动，首批覆盖出行、即时配送、同城货运三个行业平台企业，落实每单必保、每人必保。首年执行国家固定基准缴费（出行每单0.01元、即时配送每单0.07元、同城货运每单0.18元），次年起实施浮动费率。引入商业保险机构协助伤害确认及待遇核定，推动"三件事"集约为"一件事"办理。',tags:['新疆','职业伤害保障','兵地一体化','九部门'],provinces:['新疆']},
+{date:'2026-07-09',level:'中央',category:'人力资源',type:'部门文件',title:'《人力资源和社会保障事业发展"十五五"规划》',dept:'人社部',summary:'人社部印发的"十五五"专项规划，以加强人力资源开发利用为主线，支持灵活就业健康发展，建设零工市场公共服务综合体，鼓励灵活就业人员和新就业形态人员参加职工养老保险，全面取消就业地参保户籍限制，推动完善新就业形态劳动者权益保障政策。',tags:['十五五','人社规划','灵活就业','权益保障'],provinces:[]},
+{date:'2026-07-13',level:'地方',category:'社保',type:'地方文件',title:'《黑龙江省新就业形态人员职业伤害保障业务经办和征收管理规程（试行）》',dept:'黑龙江省人社厅/国家税务总局黑龙江省税务局',summary:'黑人社规〔2026〕4号，细化新就业形态人员职业伤害保障的参保登记、缴费申报、征收管理、待遇经办等流程。配合《黑龙江省实施办法》落实国家试点部署，2026年7月1日起施行。',tags:['黑龙江','职业伤害保障','经办规程','黑人社规'],provinces:['黑龙江']},
+{date:'2026-07-14',level:'地方',category:'社保',type:'地方文件',title:'《关于调整城乡居民基本养老保险缴费档次的通知》',dept:'重庆市人社局/财政局/税务局',summary:'渝人社规〔2026〕13号，调整重庆市城乡居民基本养老保险缴费档次，完善多缴多得激励机制，优化参保缴费服务，提升城乡居民养老保障水平。',tags:['重庆','养老保险','缴费档次','渝人社规'],provinces:['重庆']},
+{date:'2026-07-15',level:'地方',category:'人力资源',type:'地方文件',title:'《关于进一步规范我省专业技术人员职称初定政策的通知》',dept:'湖北省人力资源和社会保障厅',summary:'鄂人社发〔2026〕26号，进一步规范湖北省专业技术人员职称初定（初定初级、中级职称）政策，明确初定条件、程序、材料及监管要求，优化人才评价服务。',tags:['湖北','职称初定','专业技术','鄂人社发'],provinces:['湖北']},
+{date:'2026-07-16',level:'地方',category:'社保',type:'地方文件',title:'《重庆市工伤预防五年行动计划实施方案（2026—2030年）》',dept:'重庆市人社局等10部门',summary:'渝人社发〔2026〕19号，部署2026—2030年重庆市工伤预防五年行动，聚焦危化品、矿山、建筑施工、交通运输等重点行业，完善工伤预防联防联控机制，降低工伤事故发生率。',tags:['重庆','工伤预防','五年行动','渝人社发'],provinces:['重庆']},
+{date:'2026-07-20',level:'中央',category:'社保',type:'国务院文件',title:'国务院常务会议：研究优化社会保障体系有关工作',dept:'国务院',summary:'2026年7月20日国务院常务会议召开，研究优化社会保障体系有关工作。会议提出积极探索灵活就业人员社保新模式，优化农民工等群体住房保障措施，推进基本公共服务均等化，进一步完善社会保障制度。',tags:['国务院常务会议','社会保障','灵活就业','农民工','住房保障'],provinces:[]},
+{date:'2026-07-21',level:'中央',category:'人力资源',type:'部门文件',title:'《关于促进家政服务业高质量发展的若干政策措施》',dept:'商务部、国家发展改革委、教育部、公安部、民政部、人力资源社会保障部、市场监管总局、国家医保局、最高人民法院',summary:'九部门围绕家政服务业高质量发展，从支持企业、鼓励地方制度创新、强化职业技能培训、健全信用信息平台、夯实行业基础五方面提出19条举措，促消费、惠民生、稳就业。',tags:['家政服务','促消费','稳就业','九部门'],provinces:[]},
+{date:'2026-07-22',level:'地方',category:'人力资源',type:'地方文件',title:'《2026年"源来好创业"资源对接服务季活动方案》',dept:'湖北省人力资源和社会保障厅',summary:'鄂人社函〔2026〕89号，部署第三季度在全省开展创业资源对接专项行动，围绕创业场地、扶持政策、融资渠道、培训项目、导师队伍及人力资源机构等建立清单名录，服务青年创业者、返乡入乡创业人员及个体工商户等群体。',tags:['湖北','源来好创业','创业资源对接','人力资源'],provinces:['湖北']},
+{date:'2026-07-23',level:'地方',category:'人力资源',type:'地方文件',title:'《关于开展2026年高校毕业生等青年就业服务攻坚行动的通知》',dept:'福建省人力资源和社会保障厅办公室',summary:'闽人社办〔2026〕64号，以"服务不断线 攻坚促就业"为主题，2026年7月至12月面向2026届离校未就业高校毕业生和登记失业的16-24岁青年，通过发布就业服务信息、建立实名台账、落实"1131"服务等十项措施促进青年就业。',tags:['福建','高校毕业生','就业服务攻坚','青年就业'],provinces:['福建']},
+{date:'2026-07-24',level:'地方',category:'人力资源',type:'地方文件',title:'《关于开展2026年"百日千万招聘专项行动"的通知》',dept:'北京市人力资源和社会保障局',summary:'部署2026年"百日千万招聘专项行动"，通过线上线下多渠道搭建用人单位和劳动者对接平台，强化重点群体就业服务，属于公共就业服务专项活动安排。',tags:['北京','百日千万招聘','就业服务','专项行动'],provinces:['北京']},
+{date:'2026-07-24',level:'中央',category:'薪税',type:'部门文件',title:'《财政部 税务总局关于离岸信托个人所得税有关事项的公告》',dept:'财政部、国家税务总局',summary:'公告2026年第21号，明确居民个人将财产装入离岸信托及取得信托收益应按“财产转让所得”或“利息、股息、红利所得”缴纳个人所得税，规范信托终止、身份变更、死亡继承等情形纳税义务，加强反避税管理。',tags:['离岸信托','个人所得税','反避税','财政部'],provinces:[]},
+{date:'2026-07-24',level:'中央',category:'薪税',type:'部门文件',title:'《国家税务总局关于离岸信托个人所得税有关征管事项的公告》',dept:'国家税务总局',summary:'公告2026年第15号，规范离岸信托个人所得税征管，明确主管税务机关、申报期限、报送资料及信托终止等事项，为离岸信托个税征收提供操作依据。',tags:['离岸信托','个税征管','国家税务总局'],provinces:[]},
+{date:'2026-07-29',level:'地方',category:'人力资源',type:'地方文件',title:'《推进开展项目制职业技能培训实施方案》',dept:'济南市人力资源和社会保障局、济南市财政局',summary:'围绕产业发展用工需求，推行“岗位需要+技能培训+技能评价+就业服务”项目制培训，明确培训主体、对象、三类项目、培训要求、实施流程及补贴标准，提升劳动者技能促进高质量充分就业。',tags:['济南','职业技能培训','项目制','就业服务'],provinces:['山东']},
+{date:'2026-07-29',level:'地方',category:'社保',type:'地方文件',title:'《关于参保职工中止缴纳社会保险费的通知（2026年8月）》',dept:'南京市人力资源和社会保障局',summary:'对临近法定退休年龄、非南京户籍且在南京养老保险缴费不满10年的参保职工，将中止其在南京的社保关系；用人单位须及时办理中止并通知本人办理转移手续。',tags:['南京','社保关系','养老保险','转移接续'],provinces:['江苏']},
+{date:'2026-08-03',level:'地方',category:'社保',type:'地方文件',title:'《关于延续实施扩大社会保险补贴的公告》',dept:'石家庄市人力资源和社会保障局',summary:'2026年继续实施扩大社保补贴政策，按个人社保实际缴费额的25%给予补贴；符合条件的四类人员所在单位属制造业、生活服务业、现代服务业中小微企业的，可通过河北人社APP申请，补贴发放至社保卡银行账户，申请期限截至2026年底。',tags:['石家庄','社保补贴','扩大范围','中小微企业'],provinces:['河北']},
+{date:'2026-08-03',level:'地方',category:'派遣',type:'地方文件',title:'《关于注销劳务派遣经营许可的公告》',dept:'沈阳市人力资源和社会保障局',summary:'因许可证到期未申请延续，沈阳市人社局决定取消辽宁卓越人力资源管理有限公司等9家单位的劳务派遣经营许可，规范劳务派遣市场秩序。',tags:['沈阳','劳务派遣','经营许可','注销'],provinces:['辽宁']},
+{date:'2026-08-06',level:'地方',category:'社保',type:'地方文件',title:'《关于失业保险支持企业稳岗扩岗的通知》',dept:'青海省人社厅/财政厅/税务局/退役军人事务厅',summary:'四部门联合发文，延续实施失业保险稳岗返还政策，大型企业按实际缴纳失业保险费约30%返还、中小微企业约60%返还；对招用高校毕业生、登记失业青年等群体给予一次性扩岗补助1500元/人，政策执行至2026年底。',tags:['青海','失业保险','稳岗扩岗','一次性扩岗补助'],provinces:['青海']},
+{date:'2026-06-18',level:'中央',category:'社保',type:'部门文件',title:'《人力资源社会保障部 教育部 财政部 国家税务总局关于失业保险支持企业稳岗扩岗的通知》',dept:'人社部/教育部/财政部/税务总局',summary:'人社部发〔2026〕39号，延续实施失业保险稳岗返还（大型企业不超过30%、中小微企业不超过60%）、一次性扩岗补助（每招用1人不超过1500元）和技能提升补贴政策，优化资金发放和经办服务，强化基金风险防控，做好失业人员基本生活保障，执行期限为2026年1月1日至12月31日。',tags:['稳岗扩岗','失业保险','四部门','人社部发39号'],provinces:[]},
+{date:'2026-07-10',level:'地方',category:'社保',type:'地方文件',title:'《山东省人力资源和社会保障厅等11部门关于扩大新就业形态人员职业伤害保障试点的通知》',dept:'山东省人社厅等11部门',summary:'鲁人社字〔2026〕47号，扩大职业伤害保障试点平台企业范围，新增T3出行、花小猪出行、阳光出行、美团打车等出行平台和小象超市、盒马鲜生、叮咚买菜、朴朴超市、UU跑腿等即时配送平台，7月1日起实施，按单缴费执行鲁人社字〔2025〕61号基准额，逐步纳入省内其他平台，做到每单必保、每人必保。',tags:['山东','职业伤害保障','试点扩面','鲁人社字'],provinces:['山东']},
+{date:'2026-08',level:'地方',category:'社保',type:'地方文件',title:'《关于失业保险支持企业稳岗扩岗的通知》',dept:'甘肃省人社厅/省教育厅/省财政厅/省税务局',summary:'四部门联合印发，延续实施失业保险稳岗返还，大型企业按上年度实缴失业保险费30%返还、中小微企业等按60%返还，免申即享；招用毕业年度及离校两年内未就业高校毕业生、16-24岁登记失业青年并按要求参保的，每招用1人发放1500元一次性扩岗补助；技能提升补贴按初、中、高级分别给予1000元、1500元、2000元，政策执行至2026年底。',tags:['甘肃','稳岗扩岗','失业保险','一次性扩岗补助'],provinces:['甘肃']},
+{date:'2026-08-13',level:'地方',category:'社保',type:'地方文件',title:'《关于贯彻落实山东省延续实施失业保险支持企业稳岗扩岗政策的通知》',dept:'济南市人社局/市教育局/市财政局/国家税务总局济南市税务局',summary:'济人社函〔2026〕13号，要求各区县落实山东省5部门延续实施失业保险稳岗扩岗政策部署，重点推动稳岗返还、一次性扩岗补助、技能提升补贴等事项落地，支持企业稳定岗位、扩大岗位。',tags:['济南','稳岗扩岗','失业保险','济人社函'],provinces:['山东']},
+{date:'2026-07-23',level:'地方',category:'社保',type:'地方文件',title:'《关于失业保险支持企业稳岗扩岗的通知》',dept:'云南省人社厅/省教育厅/省财政厅/国家税务总局云南省税务局',summary:'云人社通〔2026〕28号，延续实施三项惠利政策：失业保险稳岗返还（大型企业按2025年度实缴30%、中小微企业等按60%返还）、一次性扩岗补助（招用符合条件高校毕业生和登记失业青年按每人1500元）、技能提升补贴（按初、中、高级分别给予1000元、1500元、2000元），执行期限为2026年1月1日至12月31日。',tags:['云南','稳岗扩岗','失业保险','云人社通'],provinces:['云南']},
+{date:'2026-07-22',level:'地方',category:'灵活用工',type:'地方文件',title:'《青海省实施就业优先战略"十五五"规划》',dept:'青海省人民政府',summary:'青政〔2026〕42号，面向2030年就业目标，部署强化就业宏观调控、产业就业协同联动、职业技能培训、重点群体就业支持、劳动者就业权益保障等任务，明确拓宽灵活就业、新就业形态发展空间，健全灵活就业人员、农民工、新就业形态人员社保制度。',tags:['青海','十五五','就业优先','灵活就业'],provinces:['青海']},
+{date:'2026-08-06',level:'地方',category:'社保',type:'地方文件',title:'《上海市失业保险金申领发放实施办法》',dept:'上海市人力资源和社会保障局',summary:'沪人社规〔2026〕18号，明确失业保险金申领条件、线上线下办理渠道、5个工作日审核期限及按月发放规则，领取期限按累计缴费年限核定最长24个月，2026年7月1日起前12个月每月2340元、后12个月按八成发放，领取期间同步参加职工医保和生育保险，临近退休不足1年可延长领取至退休年龄。自2026年8月16日起施行，有效期至2031年8月15日。',tags:['上海','失业保险金','沪人社规','申领发放'],provinces:['上海']},
+{date:'2026-08-07',level:'地方',category:'社保',type:'地方文件',title:'《关于加强我省职业伤害保障业务经办和征收管理有关工作的通知》',dept:'广东省人社厅/国家税务总局广东省税务局/深圳市税务局',summary:'粤人社规〔2026〕2号，规范新就业形态人员职业伤害保障参保缴费管理，平台企业总部按月向广州、深圳税务部门申报缴纳，线下事项"就近受理、属地办理"，优化伤害确认、劳动能力评估和待遇领取流程，实现省内协议机构就医免备案结算，建立风险防控监测平台，废止粤人社规〔2023〕21号。自2026年3月1日起实施，有效期5年。',tags:['广东','职业伤害保障','经办征管','粤人社规'],provinces:['广东']},
+{date:'2026-07-31',level:'地方',category:'社保',type:'地方文件',title:'《关于做好失业保险支持企业稳岗扩岗工作的通知》',dept:'江西省人社厅/省教育厅/省财政厅/国家税务总局江西省税务局',summary:'赣人社发〔2026〕18号，贯彻人社部发〔2026〕39号部署，延续实施失业保险稳岗返还（大型企业30%、中小微企业60%，裁员率不高于5.5%，免申即享）、一次性扩岗补助（招用符合条件高校毕业生和登记失业青年每招用1人1500元）和技能提升补贴（按证书等级1000元、1500元、2000元），政策执行期限为2026年1月1日至12月31日。',tags:['江西','稳岗扩岗','失业保险','赣人社发'],provinces:['江西']},
+{date:'2026-08-12',level:'地方',category:'薪税',type:'地方文件',title:'《关于调整我省最低工资标准的通知》',dept:'广东省人民政府',summary:'粤府函〔2026〕188号，自2026年9月1日起调整提高全省最低工资标准：月最低工资标准一档广州2680元、深圳2700元，二档2300元，三档2040元；非全日制用工小时最低工资标准一档25.4元、二档21.9元、三档20.2元，保障低收入劳动者及灵活就业人员劳动报酬权益。',tags:['广东','最低工资标准','非全日制','粤府函'],provinces:['广东']},
+{date:'2026-08-18',level:'中央',category:'人力资源',type:'部门文件',title:'《关于优化城乡社区岗位吸纳高校毕业生就业工作的通知》',dept:'人社部/中央社会工作部/民政部',summary:'三部门联合印发，部署促进更多高校毕业生到城乡社区就业：新增社区专职工作岗位原则上主要面向高校毕业生，鼓励地方开发城乡社区服务岗位，支持企业和社会组织通过政府购买服务、项目合作扩大招聘，推进"百万就业见习岗位开发计划"募集见习岗位，并完善岗位信息统一发布、职业资格评价、实习实践等配套措施。',tags:['高校毕业生','城乡社区','三部门','就业促进'],provinces:[]},
+{date:'2026-08-18',level:'中央',category:'社保',type:'行政法规',title:'《国务院关于修改〈住房公积金管理条例〉的决定》',dept:'国务院',summary:'李强签署国务院令公布该决定，对条例作出20处修改，自2026年9月20日起施行。提取情形由6项增至9项，将自住住房装修、物业费纳入提取范围；明确个体工商户、非全日制从业人员及其他灵活就业人员可自愿缴存住房公积金并按规定享受政策支持，具体办法由设区的市级以上地方人民政府制定。',tags:['住房公积金','自愿缴存','灵活就业','国务院令'],provinces:[]},
+{date:'2026-08-12',level:'地方',category:'薪税',type:'地方文件',title:'《山西省人民政府办公厅关于调整我省最低工资标准的通知》',dept:'山西省人民政府办公厅',summary:'晋政办发〔2026〕29号，自2026年10月1日起调整最低工资标准：全日制用工月标准三档分别为2350元、2250元、2150元，全日制小时标准13.5元、12.9元、12.4元，非全日制用工小时标准25.3元、24.2元、23.3元，保障低收入劳动者及灵活就业人员劳动报酬权益。',tags:['山西','最低工资标准','非全日制','晋政办发'],provinces:['山西']},
+{date:'2026-08-14',level:'地方',category:'薪税',type:'地方文件',title:'《关于调整新疆维吾尔自治区最低工资标准的通知》',dept:'新疆维吾尔自治区人民政府',summary:'自治区人民政府印发通知，自2026年10月1日起调整最低工资标准：全日制用工月标准三档分别为2270元、2080元、1930元，非全日制用工小时标准三档分别为22.7元、20.8元、19.3元，提高低收入劳动者和灵活就业人员收入底线。',tags:['新疆','最低工资标准','非全日制','自治区政府'],provinces:['新疆']},
+{date:'2026-08-10',level:'地方',category:'社保',type:'地方文件',title:'《关于做好失业保险支持企业稳岗扩岗工作的通知》',dept:'新疆维吾尔自治区人社厅/教育厅/财政厅/国家税务总局新疆维吾尔自治区税务局',summary:'新人社发〔2026〕13号，四部门联合发文，延续实施失业保险稳岗返还（大型企业30%、中小微企业60%）、一次性扩岗补助（每招用1人1500元）和技能提升补贴（按初、中、高级分别申领1000元、1500元、2000元，急需紧缺证书年度最多可享3次），政策执行期限为2026年1月1日至12月31日。',tags:['新疆','稳岗扩岗','失业保险','新人社发'],provinces:['新疆']},
+{date:'2026-08',level:'地方',category:'社保',type:'地方文件',title:'《关于失业保险支持企业稳岗扩岗的通知》',dept:'内蒙古自治区人社厅/教育厅/财政厅/国家税务总局内蒙古自治区税务局',summary:'内人社发〔2026〕15号，四部门联合印发，延续实施失业保险稳岗返还（大型企业30%、中小微企业及社会组织等按60%返还）、一次性扩岗补助（每招用1人1500元）和技能提升补贴（按初、中、高级分别给予1000元、1500元、2000元，急需紧缺职业可上浮10%），政策执行期限为2026年1月1日至12月31日。',tags:['内蒙古','稳岗扩岗','失业保险','内人社发'],provinces:['内蒙古']},
+{date:'2026-08-20',level:'中央',category:'灵活用工',type:'部门文件',title:'《中国工运事业和工会工作"十五五"规划》',dept:'全国总工会',summary:'全国总工会印发的工会系统"十五五"专项规划，部署未来五年工运事业发展和工会工作，明确扩大新就业群体组织覆盖和工作覆盖，将新就业形态劳动者权益保障纳入重点任务，用心用情用力解决重点群体急难愁盼问题。',tags:['十五五','工会规划','新就业群体','全总'],provinces:[]},
+{date:'2026-08',level:'中央',category:'灵活用工',type:'制度推进',title:'全国总工会启动电商主播建会入会试点',dept:'全国总工会',summary:'全总宣布2026年8月起以电商主播为重点，在杭州等10个城市开展建会入会试点，通过"五个一批"推动直播企业建会、主播入会、示范工会培育和工会服务落地，并依据《平台劳动规则和算法协商指引（试行）》推进派单、报酬、工时等事项协商，保障新就业形态劳动者权益。',tags:['电商主播','建会入会','算法协商','全总'],provinces:[]},
+{date:'2026-08-21',level:'中央',category:'社保',type:'部门文件',title:'《关于积极发展服务类社会救助的指导意见》',dept:'民政部/财政部',summary:'《社会救助法》施行后首个配套政策文件，推动社会救助由单一物质帮助向"物质+服务"综合模式转变。聚焦分散供养特困人员和最低生活保障家庭成员，要求开展救助需求评估、编制服务供给清单、明确筹资渠道和服务方式，鼓励社会力量和市场主体参与服务供给。',tags:['服务类社会救助','民政部','财政部','物质+服务'],provinces:[]},
+{date:'2026-08-22',level:'地方',category:'社保',type:'地方文件',title:'《湖南省人力资源和社会保障厅 国家税务总局湖南省税务局关于公布2026年社会保险缴费基准值的通知》',dept:'湖南省人社厅/国家税务总局湖南省税务局',summary:'湘人社规〔2026〕14号，公布2026年湖南省社会保险缴费基准值为6843元/月，缴费基数上限调整为20529元/月、下限调整为4106元/月，适用期为2026年1月1日至12月31日。灵活就业人员和个体参保人员可在4106元至20529元之间自主选择缴费基数，2026年12月31日前完成差额补缴的不影响个人权益记录、不计征滞纳金。',tags:['湖南','缴费基准值','灵活就业参保','湘人社规'],provinces:['湖南']},
+{date:'2026-08-21',level:'地方',category:'社保',type:'地方文件',title:'《关于2026年度各项社会保险缴费工资基数上下限的通告》',dept:'北京市人力资源和社会保障局',summary:'京人社发〔2026〕7号通告，2026年度职工养老、失业、工伤及职工医保（含生育）缴费工资基数上限调整为36348元/月、下限调整为7270元/月，自2026年7月起执行。以个人身份存档参加职工养老、失业保险的灵活就业人员可在7270元至36348元之间自主选择月缴费基数。',tags:['北京','缴费基数','灵活就业参保','京人社发'],provinces:['北京']},
+{date:'2026-08-18',level:'地方',category:'社保',type:'地方文件',title:'《关于调整2026年度社保缴费基数上下限的通告》',dept:'上海市人力资源和社会保障局',summary:'上海市2026年度社保缴费基数上限调整为37731元/月、下限调整为7546元/月，自2026年7月1日起执行。用人单位及职工应于2026年9月底前完成基数调整差额补缴且期间免收滞纳金，灵活就业参保缴费人员清算补缴期限参照执行。',tags:['上海','缴费基数','灵活就业参保','沪人社'],provinces:['上海']},
+{date:'2026-08-14',level:'地方',category:'社保',type:'地方文件',title:'《关于公布2025年度全省全口径城镇单位就业人员平均工资等有关问题的通知》',dept:'山东省人社厅/省医保局/国家税务总局山东省税务局/青岛市税务局',summary:'公布2025年度全省全口径城镇单位就业人员平均工资，明确2026年度职工各项社会保险缴费基数上限为22863元/月、下限为4573元/月，作为2026年度各项社会保险费征缴和参保人员缴费申报的执行标准。',tags:['山东','缴费基数','全口径平均工资','鲁人社'],provinces:['山东']},
+{date:'2026-08-18',level:'地方',category:'社保',type:'地方文件',title:'《关于公布2026年甘肃省社会保险缴费基数的通知》',dept:'甘肃省人社厅/财政厅/统计局/国家税务总局甘肃省税务局',summary:'甘人社通〔2026〕218号，明确2026年全省社保个人月缴费基数标准为7542元，缴费基数上限22626元/月、下限4526元/月，自2026年1月1日起使用。以个人身份参保的个体工商户和灵活就业人员可在上下限范围内自主选择缴费基数，按月、按季、按半年或按年缴纳企业职工基本养老保险费。',tags:['甘肃','缴费基数','灵活就业参保','甘人社通'],provinces:['甘肃']},
+{date:'2026-07-22',level:'中央',category:'社保',type:'部门文件',title:'《关于加强失业保险有关工作的通知》',dept:'人力资源社会保障部办公厅/财政部办公厅/国家税务总局办公厅',summary:'人社厅发〔2026〕30号，要求扩大失业保险参保覆盖、统一农民工与城镇职工参保办法，按时足额发放失业保险金，有条件省份可实行梯次发放；优化申领与转移接续流程，稳岗返还"免申即享"，技能提升补贴细化"证岗相适"；强化基金风险防控与跨区域协查，省级统筹原则上2026年底前全面取消市县失业保险基金收入户。',tags:['失业保险','人社厅发30号','三部门办公厅','免申即享'],provinces:[]},
+{date:'2026-08-28',level:'中央',category:'社保',type:'法律',title:'《中华人民共和国医疗保障法》',dept:'全国人大常委会',summary:'十四届全国人大常委会第二十四次会议表决通过，自2027年1月1日起施行。共七章五十六条，确立多层次全民医疗保障体系，规范职工和居民参保缴费、医疗保障待遇、异地就医医药费用结算、大病保险与医疗救助，强化医疗保障基金监督管理，明确国家建立健全长期护理保险制度。',tags:['医疗保障法','医保基金监管','长期护理保险','全国人大常委会'],provinces:[]},
+{date:'2026-08-11',level:'地方',category:'人力资源',type:'地方文件',title:'《规范用人单位单方解除劳动合同工作指引（试行）》',dept:'北京市总工会/北京市人力资源和社会保障局/北京企业联合会/北京市企业家协会/北京市工商联',summary:'五部门联合出台，规范用人单位单方解除劳动合同的通知工会程序：解除前须提前五个工作日将解除理由书面通知工会，未建立工会的应向实际经营地所在乡镇、街道、园区、开发区总工会履行通知义务；工会可在五个工作日内提出意见，用人单位须研究并书面回复后方可送达解除决定，程序缺失可能导致解除行为被否定。',tags:['北京','单方解除','通知工会','工作指引'],provinces:['北京']},
+{date:'2026-08-31',level:'中央',category:'薪税',type:'法律修订（审议中）',title:'《中华人民共和国税收征收管理法（修订草案）》',dept:'国务院（提请全国人大常委会审议）',summary:'税收领域根本性法律时隔20余年首次全面修订。8月31日国务院常务会议讨论并原则通过修订草案，决定提请全国人大常委会审议（预计今年一审）。修订稿共106条，新增16条、删除4条、修改69条。核心看点：建立全国统一处罚裁量基准、约束核定征收遏制"税收洼地"；强化涉税信息共享与"以数治税"，要求互联网平台报送平台内经营者及从业人员涉税信息；加强自然人税收监管、支撑直接税转型；取消行政复议"清税前置"，滞纳金改为按日万分之五的"税款迟纳金"，增强纳税人权益保护。将直接影响税务合规规则逻辑与薪税板块。',tags:['税收征管法','修订草案','涉税信息报送','以数治税','薪税合规'],provinces:[]},
+{date:'2026-08-27',level:'中央',category:'薪税',type:'部门文件',title:'《财政部 税务总局关于明确非应税交易等增值税有关事项的公告》',dept:'财政部、国家税务总局',summary:'财政部税务总局公告2026年第25号，自2026年9月1日起施行。细化增值税法实施后非应税交易口径，明确保险赔付、受赠资产、未履约违约金、无偿服务等情形对应进项税额可按规定抵扣，规定股权转让、股息红利、商品期货持仓等不得抵扣，并规范农产品销售发票、放弃优惠备案及折扣开票规则。',tags:['增值税','非应税交易','进项抵扣','第25号公告'],provinces:[]},
+{date:'2026-08-27',level:'地方',category:'社保',type:'地方文件',title:'《关于公布2026年缴纳社会保险费基数标准等有关问题的通知》',dept:'山西省人社厅/财政厅/山西省税务局/省医保局',summary:'晋人社厅发〔2026〕27号，公布2026年山西省社会保险费缴费基数，职工个人缴费下限4244元/月、上限21219元/月，自2026年1月1日起执行。无雇工个体工商户和灵活就业人员可在平均工资60%至300%区间内自主选档确定月缴费基数。',tags:['山西','社保缴费基数','灵活就业参保','晋人社厅发'],provinces:['山西']},
+{date:'2026-08-31',level:'地方',category:'社保',type:'地方文件',title:'《关于公布2026年养老保险缴费基数等有关问题的通知》',dept:'辽宁省人社厅/财政厅/辽宁省税务局/大连市税务局',summary:'辽人社〔2026〕19号，公布2026年辽宁省养老保险个人缴费基数上限22665元/月、下限4533元/月。无雇工个体工商户、未随单位参保的非全日制从业人员等个人参保人员，可在60%至300%共7个缴费档次中自愿选择。',tags:['辽宁','养老保险','缴费基数','灵活就业参保'],provinces:['辽宁']},
+{date:'2026-09-01',level:'中央',category:'薪税',type:'部门文件',title:'《财政部 税务总局关于外籍个人股息红利个人所得税政策有关事项的公告》',dept:'财政部、国家税务总局',summary:'财政部 税务总局公告2026年第27号，自2026年9月1日起执行。明确外籍个人从外商投资企业取得的股息、红利所得，按"利息、股息、红利所得"项目适用20%税率缴纳个人所得税；支付所得的外商投资企业为扣缴义务人，应于次月15日内申报纳税；未扣缴的，外籍个人应在次年6月30日前自行缴纳。同步废止财税字〔1994〕20号第二条第（八）项。',tags:['外籍个人','股息红利','20%税率','第27号公告'],provinces:[]},
+{date:'2026-09-01',level:'地方',category:'灵活用工',type:'地方立法',title:'《山东省妇女权益保障条例》',dept:'山东省人大常委会',summary:'山东省十四届人大常委会第二十五次会议7月23日表决通过，自2026年9月1日起施行。共10章69条，将招聘、录取、晋职、晋级、评聘专业技术职称和职务、培训、辞退等过程中的性别歧视行为纳入劳动保障监察范围；明确工会可就灵活就业和新就业形态女性劳动者的权益保护和相关待遇与平台企业、平台用工合作企业或行业协会开展协商；要求用人单位定期为女职工安排妇科疾病、乳腺疾病等健康检查；禁止利用生成式人工智能技术发布贬损妇女人格尊严的信息。',tags:['山东','妇女权益','新就业形态女性','地方立法'],provinces:['山东']}
+];
+
+/* ========== ALERT FEED DATA ========== */
+var alerts=[
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'财政部、税务总局：明确外籍个人股息红利个人所得税政策',date:'2026-09-01',desc:'财政部 税务总局公告2026年第27号，自2026年9月1日起执行。外籍个人从外商投资企业取得的股息红利按20%税率缴纳个税，支付企业为扣缴义务人，须于次月15日内申报；未扣缴的应在次年6月30日前自行缴纳。同步废止财税字〔1994〕20号第二条第（八）项。',provinces:[]},
+{type:'new',cat:'灵活用工',catColor:'#10B981',title:'《山东省妇女权益保障条例》9月1日起施行',date:'2026-09-01',desc:'山东省十四届人大常委会第二十五次会议表决通过，共10章69条。将招聘、录取、晋职、评聘职称、培训、辞退等环节的性别歧视纳入劳动保障监察；明确工会可就灵活就业和新就业形态女性劳动者权益与平台企业、平台用工合作企业或行业协会开展协商；要求用人单位定期为女职工安排妇科、乳腺等健康检查。',provinces:['山东']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'辽宁：公布2026年养老保险缴费基数',date:'2026-08-31',desc:'辽人社〔2026〕19号，个人缴费基数上限22665元/月、下限4533元/月。无雇工个体工商户、未随单位参保的非全日制从业人员等个人参保人员可在60%至300%共7个档次间自愿选择。',provinces:['辽宁']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'山西：公布2026年社保缴费基数（灵活就业可自主选档）',date:'2026-08-27',desc:'晋人社厅发〔2026〕27号，职工个人缴费下限4244元/月、上限21219元/月，自2026年1月1日起执行；无雇工个体工商户和灵活就业人员可在平均工资60%至300%区间自主选档。',provinces:['山西']},
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'财政部、税务总局：明确非应税交易增值税进项抵扣口径',date:'2026-08-27',desc:'公告2026年第25号，自2026年9月1日起施行，明确保险赔付、受赠资产、违约金、无偿服务等情形对应进项税额可按规定抵扣，规定股权转让、股息红利等不得抵扣，规范放弃优惠备案及折扣开票规则。',provinces:[]},
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'税收征管法迎20余年首次全面修订，草案提请全国人大常委会审议',date:'2026-08-31',desc:'8月31日国务院常务会议讨论并原则通过《税收征收管理法（修订草案）》，决定提请全国人大常委会审议（预计今年一审）。修订稿共106条，强化涉税信息共享与"以数治税"，要求互联网平台报送从业人员涉税信息，加强自然人税收监管，取消行政复议"清税前置"，滞纳金改为按日万分之五的"税款迟纳金"。作为税收根本性法律，其修订将重塑税务合规规则逻辑，直接影响薪税板块。',provinces:[]},
+{type:'upcoming',cat:'薪税',catColor:'#F59E0B',title:'税收征管法修订草案一审在即，持续跟踪审议进展',date:'预计2026年内一审',desc:'税收征管法修订草案已获国常会原则通过并将提请全国人大常委会审议，外界预计2026年内进行一审。将持续跟踪一审、二审审议进展及最终通过、施行时间，重点关注涉税信息报送、自然人税收监管、核定征收约束、纳税人权益保护等条款对灵活用工平台薪税合规的影响。',provinces:[]},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'北京：五部门出台用人单位单方解除劳动合同工作指引',date:'2026-08-31',desc:'北京市总工会、市人社局、北京企业联合会、市企业家协会、市工商联联合印发《规范用人单位单方解除劳动合同工作指引（试行）》，用人单位单方解除劳动合同须提前五个工作日书面通知工会，未建工会的向实际经营地所在乡镇、街道、园区、开发区总工会通知，工会意见须研究回复后方可送达解除决定。',provinces:['北京']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'《医疗保障法》表决通过，2027年1月1日起施行',date:'2026-08-28',desc:'十四届全国人大常委会第二十四次会议表决通过医疗保障法，共七章五十六条，确立多层次全民医疗保障体系，细化异地就医医药费用结算要求，强化医保基金监管，增加长期护理保险相关规定。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'三部门办公厅发文加强失业保险工作（人社厅发〔2026〕30号）',date:'2026-07-22',desc:'人社部、财政部、税务总局三部门办公厅联合印发通知，要求扩大失业保险参保覆盖、统一农民工与城镇职工参保办法，按时足额发放失业保险金，稳岗返还"免申即享"，强化基金风险防控，省级统筹原则上2026年底前全面取消市县失业保险基金收入户。',provinces:[]},
+{type:'info',cat:'人力资源',catColor:'#0EA5E9',title:'今日无新增政策发布',date:'2026-08-27',desc:'今日监控未检索到新发布的人力资源、税务、社保、灵活用工相关政策法规，持续监控中。医疗保障法草案正在十四届全国人大常委会第二十四次会议三审中，预计近日表决，持续关注。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'山东：公布2026年度职工社保缴费基数上下限',date:'2026-08-24',desc:'山东省人社厅、省医保局、省税务局、青岛市税务局联合公布2025年度全口径城镇单位就业人员平均工资，2026年度社保缴费基数上限22863元/月、下限4573元/月。',provinces:['山东']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'甘肃：四部门公布2026年社会保险缴费基数',date:'2026-08-24',desc:'甘人社通〔2026〕218号，个人月缴费基数标准7542元，上限22626元/月、下限4526元/月，灵活就业人员可在上下限内自主选择并按月/季/半年/年缴费。',provinces:['甘肃']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'北京：公布2026年度社保缴费工资基数上下限',date:'2026-08-21',desc:'京人社发〔2026〕7号通告，缴费基数上限36348元/月、下限7270元/月，自2026年7月起执行，灵活就业人员可在7270元至36348元之间自主选择月缴费基数。',provinces:['北京']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'上海：调整2026年度社保缴费基数上下限',date:'2026-08-18',desc:'缴费基数上限调整为37731元/月、下限7546元/月，自2026年7月1日起执行，9月底前完成基数调整补差免收滞纳金，灵活就业人员清算补缴参照执行。',provinces:['上海']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'湖南：公布2026年社会保险缴费基准值',date:'2026-08-22',desc:'湘人社规〔2026〕14号，缴费基准值6843元/月，基数上限20529元/月、下限4106元/月，灵活就业人员可在区间内自主选择缴费基数，年底前完成差额补缴不计滞纳金。',provinces:['湖南']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'民政部、财政部印发服务类社会救助指导意见',date:'2026-08-21',desc:'《社会救助法》施行后首个配套政策，推动社会救助由单一物质帮助转向"物质+服务"综合模式，聚焦分散供养特困人员和低保家庭成员。',provinces:[]},
+{type:'new',cat:'灵活用工',catColor:'#10B981',title:'全总印发工运事业和工会工作"十五五"规划',date:'2026-08-20',desc:'全国总工会印发《中国工运事业和工会工作"十五五"规划》，明确扩大新就业群体组织覆盖和工作覆盖，将新就业形态劳动者权益保障纳入重点任务。',provinces:[]},
+{type:'new',cat:'灵活用工',catColor:'#10B981',title:'全总启动电商主播建会入会试点',date:'2026-08-20',desc:'2026年8月起以电商主播为重点，在杭州等10个城市开展建会入会试点，通过"五个一批"推动直播企业建会、主播入会，并推进平台劳动规则和算法协商。',provinces:[]},
+{type:'info',cat:'社保',catColor:'#EF4444',title:'医疗保障法三审通过，2027年1月1日起施行',date:'2026-08-28',desc:'十四届全国人大常委会第二十四次会议8月28日表决通过医疗保障法。草案三次审议稿于8月25日至28日提请审议并获通过，细化异地就医医药费用结算要求，增加长期护理保险相关规定。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'内蒙古：四部门印发失业保险稳岗扩岗通知',date:'2026-08-20',desc:'内人社发〔2026〕15号，延续稳岗返还（大型企业30%、中小微企业及社会组织等60%）、一次性扩岗补助1500元/人和技能提升补贴1000-2000元（急需紧缺职业可上浮10%），执行至2026年底。',provinces:['内蒙古']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'新疆：四部门印发失业保险稳岗扩岗通知',date:'2026-08-19',desc:'新人社发〔2026〕13号，延续稳岗返还（大型企业30%、中小微企业60%）、一次性扩岗补助1500元/人和技能提升补贴1000元、1500元、2000元（急需紧缺证书年度最多可享3次），执行期限2026年全年。',provinces:['新疆']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'国务院修改住房公积金条例：灵活就业人员可自愿缴存',date:'2026-08-18',desc:'李强签署国务院令公布《国务院关于修改〈住房公积金管理条例〉的决定》，提取情形由6项增至9项（新增自住住房装修、物业费），明确个体工商户、非全日制从业人员及其他灵活就业人员可自愿缴存住房公积金并享受政策支持，自2026年9月20日起施行。',provinces:[]},
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'山西：最低工资标准10月1日起调整提高',date:'2026-08-18',desc:'晋政办发〔2026〕29号，全日制用工月标准三档2350元、2250元、2150元，非全日制用工小时标准三档25.3元、24.2元、23.3元，2026年10月1日起实施。',provinces:['山西']},
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'新疆：最低工资标准10月1日起调整提高',date:'2026-08-14',desc:'自治区人民政府印发通知，全日制用工月标准三档2270元、2080元、1930元，非全日制用工小时标准三档22.7元、20.8元、19.3元，2026年10月1日起执行。',provinces:['新疆']},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'三部门发文：优化城乡社区岗位吸纳高校毕业生就业',date:'2026-08-18',desc:'人社部、中央社会工作部、民政部联合印发《关于优化城乡社区岗位吸纳高校毕业生就业工作的通知》，新增社区专职工作岗位原则上主要面向高校毕业生，支持企业和社会组织通过政府购买服务、项目合作扩大招聘。',provinces:[]},
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'广东：最低工资标准9月1日起调整提高',date:'2026-08-14',desc:'粤府函〔2026〕188号，自2026年9月1日起调整全省最低工资标准：月标准一档广州2680元、深圳2700元，二档2300元，三档2040元；非全日制用工小时标准一档25.4元、二档21.9元、三档20.2元。',provinces:['广东']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'上海：失业保险金申领发放实施办法8月16日起施行',date:'2026-08-06',desc:'沪人社规〔2026〕18号，明确失业保险金申领条件、办理渠道和发放标准，前12个月每月2340元、后12个月按八成发放，临近退休不足1年可延长领取，有效期至2031年8月15日。',provinces:['上海']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'广东：规范职业伤害保障业务经办和征收管理',date:'2026-08-07',desc:'粤人社规〔2026〕2号，平台企业总部按月向广州、深圳税务申报缴纳职业伤害保障费，线下事项"就近受理、属地办理"，省内就医免备案结算，废止粤人社规〔2023〕21号。',provinces:['广东']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'江西：四部门发文落实失业保险稳岗扩岗政策',date:'2026-07-31',desc:'赣人社发〔2026〕18号，延续稳岗返还（大型企业30%、中小微企业60%、免申即享）、一次性扩岗补助1500元/人和技能提升补贴1000-2000元，执行期限2026年全年。',provinces:['江西']},
+{type:'new',cat:'灵活用工',catColor:'#10B981',title:'青海：省政府印发就业优先战略"十五五"规划',date:'2026-07-22',desc:'青政〔2026〕42号，部署未来五年就业优先重点任务，明确拓宽灵活就业、新就业形态发展空间，健全灵活就业人员、农民工、新就业形态人员社保制度。',provinces:['青海']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'济南：四部门部署落实失业保险稳岗扩岗政策',date:'2026-08-13',desc:'济人社函〔2026〕13号，济南市人社、教育、财政、税务四部门联合发文，落实山东省延续实施失业保险稳岗扩岗政策部署，重点推动稳岗返还、一次性扩岗补助、技能提升补贴落地。',provinces:['山东']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'云南：四部门联合印发失业保险稳岗扩岗通知',date:'2026-07-23',desc:'云人社通〔2026〕28号，延续实施稳岗返还（大型企业30%、中小微企业60%）、一次性扩岗补助1500元/人和技能提升补贴1000-2000元三项惠利政策，执行期限2026年全年。',provinces:['云南']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'甘肃：四部门联合出台失业保险稳岗扩岗新政',date:'2026-08-12',desc:'甘肃省人社厅、省教育厅、省财政厅、省税务局近日联合印发通知，延续稳岗返还（大型企业30%、中小微企业60%、免申即享）、一次性扩岗补助1500元/人和技能提升补贴1000-2000元，执行至2026年底。',provinces:['甘肃']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'山东：11部门扩大职业伤害保障试点平台范围',date:'2026-07-10',desc:'鲁人社字〔2026〕47号，新增T3出行、花小猪出行、美团打车等出行平台和小象超市、盒马鲜生、UU跑腿等即时配送平台，7月1日起实施，每单必保、每人必保。',provinces:['山东']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'四部门延续实施失业保险稳岗扩岗政策',date:'2026-06-18',desc:'人社部发〔2026〕39号，延续稳岗返还、一次性扩岗补助和技能提升补贴政策，执行期限2026年全年，为青海、甘肃等地稳岗扩岗新政提供政策依据。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'青海：四部门联合出台失业保险稳岗扩岗新政',date:'2026-08-06',desc:'青海省人社厅等四部门发文，延续失业保险稳岗返还政策，对招用高校毕业生、登记失业青年等给予一次性扩岗补助1500元/人。',provinces:['青海']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'石家庄：延续实施扩大社会保险补贴',date:'2026-08-03',desc:'石家庄市人社局发布公告，2026年继续按个人社保实际缴费额25%给予社保补贴，符合条件人员可通过河北人社APP申请。',provinces:['河北']},
+{type:'new',cat:'派遣',catColor:'#3B82F6',title:'沈阳：注销9家单位劳务派遣经营许可',date:'2026-08-03',desc:'沈阳市人社局公告，因许可证到期未申请延续，决定取消辽宁卓越人力资源管理有限公司等9家单位劳务派遣经营许可。',provinces:['辽宁']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'南京：部分参保职工将中止缴纳社会保险费',date:'2026-07-29',desc:'南京市人社局发布通知，对临近退休、非南京户籍且南京养老保险缴费不满10年的参保职工中止社保关系并办理转移。',provinces:['江苏']},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'济南：推进项目制职业技能培训实施方案发布',date:'2026-07-29',desc:'济南市人社局、财政局印发方案，推行“岗位需要+技能培训+技能评价+就业服务”项目制培训，明确补贴标准。',provinces:['山东']},
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'税务总局：离岸信托个人所得税征管事项公告',date:'2026-07-24',desc:'国家税务总局公告2026年第15号，规范离岸信托个税主管税务机关、申报期限、报送资料等事项。',provinces:[]},
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'财政部、税务总局：离岸信托个人所得税事项明确',date:'2026-07-24',desc:'两部门发布公告2026年第21号，明确离岸信托财产装入及收益个人所得税纳税义务，加强反避税管理。',provinces:[]},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'北京：开展2026年"百日千万招聘专项行动"',date:'2026-07-24',desc:'北京市人社局部署2026年"百日千万招聘专项行动"，通过线上线下多渠道搭建用人单位和劳动者对接平台。',provinces:['北京']},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'福建：开展2026年高校毕业生等青年就业服务攻坚行动',date:'2026-07-23',desc:'闽人社办〔2026〕64号，7月至12月面向离校未就业高校毕业生和登记失业青年，落实"1131"服务等十项措施。',provinces:['福建']},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'湖北：启动2026年"源来好创业"资源对接服务季',date:'2026-07-22',desc:'鄂人社函〔2026〕89号，第三季度在全省开展创业资源对接专项行动，服务青年创业者、返乡入乡创业人员等群体。',provinces:['湖北']},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'九部门发文促进家政服务业高质量发展',date:'2026-07-21',desc:'商务部等9部门印发《关于促进家政服务业高质量发展的若干政策措施》，从五方面提出19条举措，促消费、惠民生、稳就业。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'国务院常务会：研究优化社会保障体系有关工作',date:'2026-07-20',desc:'7月20日国务院常务会议提出积极探索灵活就业人员社保新模式，优化农民工等群体住房保障措施。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'重庆：工伤预防五年行动计划实施方案发布',date:'2026-07-16',desc:'渝人社发〔2026〕19号，部署2026—2030年工伤预防五年行动，聚焦重点行业降低工伤事故发生率。',provinces:['重庆']},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'湖北：进一步规范专业技术人员职称初定政策',date:'2026-07-15',desc:'鄂人社发〔2026〕26号，规范职称初定条件、程序、材料及监管要求，优化人才评价服务。',provinces:['湖北']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'重庆：调整城乡居民基本养老保险缴费档次',date:'2026-07-14',desc:'渝人社规〔2026〕13号，调整城乡居民基本养老保险缴费档次，完善多缴多得激励机制。',provinces:['重庆']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'黑龙江：新就业形态职业伤害保障经办和征收管理规程出台',date:'2026-07-13',desc:'黑人社规〔2026〕4号，细化参保登记、缴费申报、征收管理及待遇经办流程，7月1日起施行。',provinces:['黑龙江']},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'人社部印发《事业发展"十五五"规划》',date:'2026-07-17',desc:'以加强人力资源开发利用为主线，支持灵活就业健康发展，全面取消就业地参保户籍限制，推动完善新就业形态劳动者权益保障政策。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'湖北：职业伤害保障试点扩围，新增14家平台',date:'2026-07-16',desc:'鄂人社函〔2026〕78号，扩大试点平台企业范围，新增14家出行、配送及超市等平台，逐步吸纳省内中小企业，规范参保缴费与待遇确认流程。',provinces:['湖北']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'新疆：兵地一体化职业伤害保障试点7月1日启动',date:'2026-07-16',desc:'九部门联合发文，兵地同步启动试点，覆盖出行、即时配送、同城货运三大行业，每单必保每人必保，引入商业保险协助经办。',provinces:['新疆']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'湖南：九部门联合启动职业伤害保障试点',date:'2026-07-15',desc:'湘人社规〔2026〕7号，九部门联合发文，7月1日起启动职业伤害保障试点，覆盖出行、即时配送、同城货运行业，明确跨省接单伤害发生地认定规则。',provinces:['湖南']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'云南：新就业形态职业伤害保障实施办法出台',date:'2026-07-15',desc:'九部门联合制定实施办法，7月1日启动试点，首批纳入25家平台企业，个人不缴费，禁止平台通过提高抽成转嫁负担，集成"一件事"办理。',provinces:['云南']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'辽宁：十一部门联合启动职业伤害保障试点',date:'2026-07-15',desc:'辽人社规〔2025〕4号，十一部门联合发文，首批覆盖出行、即时配送、同城货运行业11家头部平台企业，按单定额缴费、个人无需缴费。',provinces:['辽宁']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'陕西：新就业形态职业伤害保障实施办法出台',date:'2026-07-14',desc:'十部门联合出台实施办法，7月1日起启动试点，覆盖出行、即时配送、同城货运3个行业19家平台企业，平台全额出资、按单缴费。',provinces:['陕西']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'河北：统筹城乡就业政策纳入职业伤害保障试点',date:'2026-07-14',desc:'冀人社发〔2026〕8号，明确扩大新就业形态从业人员职业伤害保障试点范围，7月1日起落实国家试点部署。',provinces:['河北']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'河南：职业伤害保障试点7月1日启动，覆盖12家平台',date:'2026-07-14',desc:'九部门联合部署，覆盖出行、即时配送、同城货运3个行业12家平台，出行每单0.01元、即时配送每单0.07元、同城货运每单0.18元。',provinces:['河南']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'贵州：九部门联合启动职业伤害保障试点',date:'2026-07-14',desc:'九部门联合发文，7月1日启动试点，首批纳入11家平台企业，保费由平台全额承担，次年起实施费率浮动机制。',provinces:['贵州']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'吉林：职业伤害保障试点地方方案落地，7月1日启动',date:'2026-07-14',desc:'吉人社联〔2026〕25号，十部门联合部署，覆盖出行、即时配送、同城货运3个行业25家平台，资金纳入工伤保险省级统筹。',provinces:['吉林']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'黑龙江：新就业形态职业伤害保障实施办法出台',date:'2026-07-14',desc:'十部门联合出台实施办法，7月1日起启动试点，出行每单0.01元、即时配送每单0.07-0.25元、同城货运每单0.18元，引入商业保险经办。',provinces:['黑龙江']},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'四部门发布"人工智能＋人社"应用发展实施意见',date:'2026-07-08',desc:'人社部发〔2026〕40号，推动AI与人社业务深度融合，拓展就业、社保、人才等六大应用场景，搭建部省协同AI应用平台。',provinces:[]},
+{type:'warning',cat:'人力资源',catColor:'#0EA5E9',title:'2026年清理整顿人力资源市场秩序专项行动（4-7月）',date:'2026-07-13',desc:'重点打击"假外包、真派遣"违规派遣行为，治理"招转培（贷）"欺诈和虚假招录信息，规范网络招聘许可管理。',provinces:[]},
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'《增值税法实施条例》发布（国务院令第826号）',date:'2025-12-25',desc:'配套增值税法2026年1月1日起施行，明确自然人为小规模纳税人、境内单位为扣缴义务人，细化发票开具和退免税流程。',provinces:[]},
+{type:'new',cat:'灵活用工',catColor:'#10B981',title:'国务院印发《稳岗扩容提质行动方案》',date:'2026-04-30',desc:'系统部署高质量充分就业，明确提出制定《新就业形态劳动者权益保障办法》，将就业指标纳入重大政策评估体系。',provinces:[]},
+{type:'new',cat:'薪税',catColor:'#F59E0B',title:'国税总局发布个税征管事项公告（第12号）',date:'2026-05-29',desc:'明确资源回收反向开票经营所得个税预缴率（不超60万减按0.25%），为反向开票机制提供操作依据。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'安徽灵活就业社保补贴标准提高至每月500元',date:'2026-07-01',desc:'皖人社秘〔2026〕74号，就业困难人员灵活就业社保补贴统一提高至每人每月500元（不超过实际缴费2/3），7月1日起实施。',provinces:['安徽']},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'广东灵活就业人员可参加失业保险',date:'2026-07-07',desc:'粤人社规〔2025〕50号，平台就业者和个体户可自愿参保，按月缴费，明确平台关闭等非自愿中断情形可申领失业金。',provinces:['广东']},
+{type:'new',cat:'派遣',catColor:'#3B82F6',title:'广东发布劳务派遣服务地方标准',date:'2026-07-07',desc:'DB44/T 2805-2026正式实施，规范派遣全流程，要求两年以上固定合同、跨地区派遣按用工地标准付薪、工伤30日内认定。',provinces:['广东']},
+{type:'info',cat:'社保',catColor:'#EF4444',title:'国务院：全面取消就业地社保户籍限制',date:'2026-05-22',desc:'国务院发布常住地基本公共服务实施意见，要求取消就业地参保户籍限制，健全灵活就业人员和新就业形态人员社保参保制度。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'职业伤害保障试点7月1日起向全国推开',date:'2026-07-01',desc:'九部门联合发文，职业伤害保障试点从17省扩大至全国31省份，覆盖出行、即时配送、同城货运三大行业。',provinces:[]},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'甘肃省就业促进"十五五"规划发布',date:'2026-07-03',desc:'甘肃省政府办公厅发布就业促进十五五规划，目标城镇新增就业140万人以上，推动灵活就业群体规模扩大。',provinces:['甘肃']},
+{type:'new',cat:'人力资源',catColor:'#0EA5E9',title:'《超龄劳动者基本权益保障暂行规定》7月1日施行',date:'2026-07-01',desc:'五部门联合发布首部超龄劳动者权益保护规章，要求订立书面用工协议、保障劳动报酬和职业安全，强制参加工伤保险。',provinces:[]},
+{type:'new',cat:'社保',catColor:'#EF4444',title:'《社会救助法》7月1日正式施行',date:'2026-07-01',desc:'全国人大常委会通过的社会保障领域基础性法律正式施行，共7章78条，涵盖救助对象、程序、社会力量参与等。',provinces:[]},
+{type:'new',cat:'灵活用工',catColor:'#10B981',title:'山东18部门联合发文：推动灵活就业"向新向智"发展',date:'2026-06-28',desc:'山东省人社厅等18部门联合发布意见，拓展灵活就业新空间，推动数字化赋能灵活就业服务，纳入民生实事项目。',provinces:['山东']},
+{type:'new',cat:'灵活用工',catColor:'#10B981',title:'《实施就业优先战略"十五五"规划》发布',date:'2026-06-25',desc:'国务院层面首个就业优先战略五年规划，系统部署灵活就业和新就业形态的制度保障。',provinces:[]},
+{type:'new',cat:'灵活用工',catColor:'#10B981',title:'《新就业形态劳动者权益保障办法》推进中',date:'2026-06-20',desc:'人社部将以部门规章形式系统规范劳动关系认定、权益保障、争议处理，预计成为新就业形态领域首部专门规章。',provinces:[]},
+{type:'upcoming',cat:'薪税',catColor:'#F59E0B',title:'增值税法已施行 — 反向开票制度落地',date:'2026-01-01起',desc:'增值税法2026年1月1日起施行，灵活用工平台发票管理和增值税处理方式发生重大变化，"反向开票"制度正式确立。',provinces:[]},
+{type:'upcoming',cat:'灵活用工',catColor:'#10B981',title:'《新就业形态劳动者权益保障办法》即将出台',date:'预计2026年Q3',desc:'人社部正推进该办法制定，将以部门规章形式规范劳动关系认定和权益保障，需密切关注发布动态。',provinces:[]},
+{type:'info',cat:'社保',catColor:'#EF4444',title:'职业伤害保障试点已扩展至全国',date:'2026-07-01起',desc:'试点已从7省市扩大至全国31省份，累计参保超2700万人，覆盖出行、即时配送、同城货运三大行业。',provinces:[]},
+{type:'upcoming',cat:'薪税',catColor:'#F59E0B',title:'各省灵活用工个税征管细则持续更新',date:'持续更新中',desc:'各省税务局在国税总局框架下收紧核定征收范围，推动"经营所得"与"劳务报酬"准确定性，需关注本地细则。',provinces:['天津','海南','江西','重庆']},
+{type:'warning',cat:'薪税',catColor:'#F59E0B',title:'平台涉税信息报送合规提醒',date:'2025-06生效',desc:'国务院令第810号要求互联网平台企业向税务机关报送从业人员交易和收入信息，未合规报送将面临处罚风险。',provinces:[]},
+{type:'warning',cat:'灵活用工',catColor:'#10B981',title:'劳务派遣用工比例合规检查',date:'持续有效',desc:'《劳务派遣暂行规定》要求派遣用工比例不超过10%，企业需定期自查，超比例企业面临整改和处罚风险。',provinces:[]},
+{type:'info',cat:'灵活用工',catColor:'#10B981',title:'深圳率先出台新就业形态权益保障决定',date:'2026-03-19',desc:'深圳以人大决定形式提供法治保障，明确平台企业用工主体责任，建立劳动报酬保障、职业安全、社保参保等制度。',provinces:['广东']},
+{type:'info',cat:'社保',catColor:'#EF4444',title:'三中全会明确社保改革方向',date:'2024-07',desc:'要求全面取消在就业地参保户籍限制，健全灵活就业人员社保制度，研究同新业态相适应的税收制度。',provinces:[]},
+{type:'info',cat:'人力资源',catColor:'#0EA5E9',title:'人力资源服务业高质量发展目标',date:'2025年目标年',desc:'五部门联合明确2025年人力资源服务业规模目标，鼓励发展灵活用工、服务外包、在线培训等新业态。',provinces:[]}
+];
+
+/* ========== PROVINCE MAP (GeoJSON-derived SVG Paths) ========== */
+// Province boundary data from standard GeoJSON (Aliyun DataV), simplified via RDP
+var provGeoJSON = [{n:"新疆",s:"新",paths:["M233.9,129.6L223.3,114.7L224.1,111.6L217.2,111.1L205.1,103.9L178.8,101.3L176.8,96.8L180.3,91.7L180.5,83.7L173.8,73.1L165.7,68.6L160.8,69.1L149.7,62.4L148.2,55.5L138.9,56.0L135.8,62.8L125.9,66.8L125.5,79.8L119.6,82.1L100.3,78.0L92.7,96.4L95.6,101.1L87.9,99.1L68.9,104.5L74.0,107.8L78.0,124.4L73.8,126.1L76.0,127.7L72.6,128.5L71.4,137.6L51.6,145.1L47.8,149.2L38.9,149.2L33.3,157.1L27.1,157.8L26.0,153.4L18.4,155.0L19.1,157.1L10.2,160.0L8.7,166.9L5.0,168.1L8.4,172.4L8.0,177.0L18.6,178.4L18.9,187.8L21.4,191.4L15.0,194.7L28.7,199.3L31.6,209.0L35.6,207.9L42.0,212.5L51.4,212.8L52.1,221.7L59.0,225.9L68.0,224.5L74.3,213.3L86.9,215.8L94.7,210.2L99.7,210.8L101.3,213.9L111.6,214.4L120.5,209.9L126.1,211.0L131.9,205.5L143.6,202.2L154.7,201.5L167.7,206.1L170.4,203.8L178.5,206.8L181.2,205.7L177.3,197.5L182.8,193.6L175.2,187.1L175.3,180.3L172.8,181.3L171.1,178.5L194.2,172.4L199.3,154.4L207.6,153.4L215.3,143.7L221.4,140.6L223.0,143.0L230.5,138.7L231.8,135.5L229.8,133.0L233.9,129.6Z"],cx:121.9,cy:148.2},
+{n:"西藏",s:"藏",paths:["M167.1,205.9L154.7,201.5L144.3,202.1L132.8,205.0L126.1,211.0L120.5,209.9L111.6,214.4L101.3,213.9L99.7,210.8L94.7,210.2L86.9,215.8L74.3,213.3L68.0,224.5L60.4,225.2L56.6,229.0L56.8,234.0L61.5,239.4L63.1,246.1L59.7,249.2L57.4,244.9L54.0,246.9L54.7,251.5L57.6,253.6L57.6,260.4L61.0,264.6L66.7,264.7L70.4,269.1L80.3,273.2L81.3,275.8L84.2,271.2L91.0,272.0L91.8,275.2L102.7,280.9L106.0,285.5L111.2,284.2L114.8,290.5L121.3,291.2L121.1,295.0L127.2,294.7L130.0,300.1L131.9,297.1L134.1,300.1L137.0,297.8L142.3,301.2L157.6,298.2L159.8,308.1L162.4,301.3L167.9,296.2L180.3,300.6L184.6,299.0L185.9,304.3L190.6,306.0L191.1,312.2L208.2,310.2L212.8,303.8L228.3,295.6L241.0,302.0L243.9,300.3L245.7,292.8L251.4,297.4L253.0,294.6L253.9,297.7L257.1,296.4L256.2,288.0L259.7,289.4L260.7,276.8L259.6,267.2L256.0,262.3L258.9,260.2L252.2,249.1L243.6,246.5L243.1,252.1L237.2,252.8L237.8,256.7L231.9,254.1L231.6,257.6L229.8,255.1L225.1,255.9L224.4,251.2L220.8,249.8L222.2,248.4L216.1,245.3L211.4,248.0L205.2,247.5L174.1,238.5L166.4,229.4L168.7,220.7L164.5,215.9L168.0,208.7L164.0,206.8L167.1,205.9Z"],cx:154.4,cy:258.9},
+{n:"青海",s:"青",paths:["M298.3,202.8L294.5,195.9L296.0,193.5L290.0,187.2L282.0,185.8L270.3,178.2L271.3,181.3L258.2,171.5L252.8,172.2L250.9,175.0L239.6,170.2L240.6,177.2L232.6,182.3L227.0,179.4L215.6,180.0L213.7,175.2L201.8,173.4L201.2,170.4L171.3,178.3L172.8,181.3L175.3,180.3L175.2,187.1L182.8,193.6L177.1,199.4L180.4,200.9L181.2,205.7L170.0,203.8L169.4,206.2L164.0,206.8L168.0,208.7L164.5,215.9L168.7,220.7L166.4,229.4L173.6,238.3L205.2,247.5L211.4,248.0L216.1,245.3L222.2,248.4L220.8,249.8L224.4,251.2L225.1,255.9L229.8,255.1L232.1,257.6L231.9,254.1L237.8,256.7L237.2,252.8L243.1,252.1L243.3,246.8L247.3,246.9L243.5,242.7L247.5,236.8L243.7,231.8L248.1,227.6L254.0,229.0L257.6,238.3L262.7,242.9L267.2,244.6L268.8,241.0L272.1,246.0L281.6,245.4L281.2,239.0L286.3,240.3L287.8,235.4L281.7,233.9L278.2,226.4L287.4,229.1L292.6,225.9L289.2,220.0L294.0,216.4L292.9,213.6L298.1,212.1L296.9,209.6L299.4,209.0L300.7,204.5L298.3,202.8Z"],cx:230.4,cy:210.8},
+{n:"甘肃",s:"甘",paths:["M335.1,210.0L333.6,215.8L328.9,213.7L330.5,212.8L323.8,209.4L325.2,205.3L321.7,195.6L316.4,193.2L316.8,190.8L311.8,190.8L304.1,185.6L304.2,179.3L312.0,172.6L310.9,167.7L300.1,171.4L289.0,171.2L290.8,173.7L287.8,176.4L282.3,172.3L279.7,173.1L278.4,167.8L264.4,162.3L271.7,157.8L271.1,150.9L253.4,154.5L253.3,150.4L246.3,144.4L248.5,142.0L241.7,128.9L231.0,131.0L230.5,138.7L223.0,143.0L221.4,140.6L215.3,143.7L207.6,153.4L199.3,154.4L196.4,166.6L193.4,169.8L194.1,172.1L201.2,170.4L201.8,173.4L213.7,175.2L215.6,180.0L227.0,179.4L232.6,182.3L240.6,177.2L239.6,170.2L250.9,175.0L252.8,172.2L258.2,171.5L271.3,181.3L270.3,178.2L282.0,185.8L290.0,187.2L296.4,194.4L294.5,195.9L300.7,204.5L299.4,209.0L289.2,220.0L292.6,225.9L289.6,228.7L279.5,225.6L277.6,227.9L281.7,233.9L288.8,234.9L288.7,240.3L294.6,236.3L291.4,230.4L299.1,226.4L301.7,232.2L311.8,234.6L314.2,237.7L312.9,243.4L323.0,245.4L324.1,242.4L329.2,241.6L327.1,237.1L329.7,234.4L335.8,234.9L334.1,231.0L337.2,225.8L333.1,223.3L335.8,221.1L335.4,217.5L342.5,219.9L348.4,218.7L347.5,214.9L355.8,215.1L355.0,208.5L357.1,205.4L356.2,202.0L343.1,196.5L341.8,193.9L336.2,193.9L336.4,198.7L333.7,200.7L339.6,205.9L339.0,209.8L335.1,210.0Z"],cx:276.2,cy:185.4},
+{n:"内蒙古",s:"蒙",paths:["M241.7,128.9L248.5,142.0L246.3,144.4L253.3,150.4L253.4,154.5L271.1,150.9L271.7,157.8L264.4,162.3L278.4,167.8L279.7,173.1L282.3,172.3L287.8,176.4L290.8,173.7L289.0,171.2L300.1,171.4L310.9,167.7L312.0,172.6L304.2,179.3L305.3,182.2L303.6,183.6L311.8,190.8L327.6,186.3L329.7,173.5L336.0,168.2L339.7,172.2L334.8,180.3L350.3,188.0L357.8,187.6L358.0,183.4L360.7,183.7L360.5,179.0L369.0,169.4L372.2,169.3L371.5,167.3L376.3,169.4L381.4,165.7L380.9,168.2L383.4,167.7L385.0,164.9L389.4,165.3L393.1,158.1L397.4,159.1L410.6,154.9L408.7,144.7L412.3,143.6L412.0,140.4L415.6,136.5L418.6,136.9L418.6,142.6L422.0,142.9L428.3,138.7L431.0,140.6L433.1,138.0L438.0,138.3L439.2,133.4L447.8,130.9L453.0,137.3L451.3,141.1L453.8,145.9L462.0,146.2L464.2,143.0L462.4,135.7L465.0,133.5L471.0,141.5L474.7,136.8L489.4,130.1L505.7,126.5L507.0,122.2L503.2,120.8L505.4,119.2L503.9,113.1L501.2,109.1L492.7,112.1L490.5,104.5L492.4,100.3L489.7,95.5L486.4,94.8L488.4,91.7L497.4,95.4L497.9,91.2L501.8,89.1L500.0,85.4L506.0,84.1L503.0,80.5L503.7,82.4L500.0,83.6L494.2,76.5L512.6,62.8L515.3,67.3L518.1,56.2L522.2,55.3L522.6,44.8L530.6,34.0L521.3,26.9L514.1,31.4L500.0,30.9L496.3,22.2L497.9,20.1L491.7,17.1L487.1,19.3L481.8,16.1L487.9,11.3L486.8,8.7L478.2,8.4L470.3,14.1L470.8,16.3L477.3,16.8L477.9,21.2L470.9,26.7L461.3,41.5L463.5,44.1L448.1,51.5L437.2,47.8L428.2,66.0L425.3,67.2L429.4,72.6L437.9,70.2L443.8,73.1L448.1,68.8L455.7,69.1L467.2,78.3L469.1,84.3L444.2,85.3L443.7,87.9L435.9,88.6L431.7,95.6L415.5,99.0L406.3,106.4L389.0,102.9L384.2,110.9L389.5,118.5L365.4,132.6L344.7,132.7L320.1,142.8L315.2,141.9L315.3,139.4L304.2,139.4L278.6,130.3L241.7,128.9Z"],cx:409.3,cy:114.0},
+{n:"宁夏",s:"宁",paths:["M342.7,194.4L343.1,188.5L346.6,185.8L334.8,180.3L339.5,173.2L337.5,168.1L329.7,173.5L327.6,186.3L312.9,190.6L316.8,190.8L316.4,193.2L321.7,195.6L325.2,205.3L323.8,209.4L333.6,215.8L334.3,210.6L339.3,209.2L339.3,205.4L335.0,203.9L333.6,200.4L336.4,198.7L336.1,194.0L342.7,194.4Z", "M330.5,212.9L328.9,213.7L330.5,212.9Z"],cx:331.7,cy:192.5},
+{n:"陕西",s:"陕",paths:["M373.8,223.1L372.3,219.9L376.1,211.2L373.8,195.2L378.0,189.1L375.1,181.8L379.1,178.0L382.5,169.0L381.4,165.7L377.0,169.4L371.5,167.3L372.2,169.3L369.0,169.4L360.5,179.0L360.7,183.7L358.0,183.4L357.8,187.6L351.3,188.3L346.8,185.3L343.1,188.5L343.1,196.5L356.5,202.6L356.1,214.7L347.5,214.9L348.6,218.5L345.2,219.5L335.4,217.5L335.8,221.1L333.1,223.3L337.2,225.8L334.1,231.0L335.8,234.9L329.7,234.4L327.1,237.1L329.2,241.6L325.0,243.0L326.0,245.0L330.4,243.1L334.2,245.9L340.7,244.8L342.6,248.4L344.4,246.9L349.8,251.3L354.7,249.9L365.9,256.1L366.3,246.1L372.1,245.7L365.1,238.8L377.0,240.4L380.3,237.7L373.8,223.1Z"],cx:358.3,cy:213.2},
+{n:"山西",s:"晋",paths:["M373.8,223.1L406.3,211.2L407.3,202.8L404.7,198.9L407.7,197.2L411.4,187.7L405.4,180.9L405.6,177.6L409.0,171.7L413.5,171.6L415.7,165.9L409.1,160.8L415.3,157.0L411.3,152.5L405.6,157.0L393.1,158.1L389.4,165.3L385.0,164.9L381.4,167.8L378.7,178.8L375.1,181.8L378.0,189.1L373.8,195.2L376.1,211.2L372.3,219.9L373.8,223.1Z"],cx:393.0,cy:188.9},
+{n:"河北",s:"冀",paths:["M444.7,153.5L442.3,156.8L447.8,160.3L445.1,161.6L446.4,165.6L449.3,165.9L448.1,168.4L454.9,173.5L468.7,161.5L465.6,154.7L458.5,151.5L462.4,145.9L453.5,145.6L451.3,141.1L453.0,137.3L448.0,131.0L439.2,133.4L438.0,138.3L433.1,138.0L431.0,140.6L428.3,138.7L423.8,142.6L418.6,142.6L417.9,136.3L412.0,140.4L412.3,143.6L409.3,143.9L410.2,146.8L408.2,148.4L415.3,157.0L409.1,160.8L415.7,165.9L413.5,171.6L409.0,171.7L405.6,177.6L405.4,180.9L411.4,187.7L407.7,197.2L404.7,198.9L405.9,201.7L423.7,205.9L422.7,201.3L429.8,191.6L447.7,182.5L449.6,179.7L446.4,176.8L437.5,175.3L438.1,165.4L434.3,167.4L424.4,163.9L424.5,160.7L429.7,158.0L427.6,154.8L434.5,152.2L433.4,150.3L436.2,148.9L439.6,152.8L444.7,153.5Z", "M442.1,160.1L437.8,160.6L438.9,164.6L441.8,165.1L442.1,160.1Z", "M447.8,168.2L445.2,168.4L447.8,168.2Z"],cx:432.3,cy:166.1},
+{n:"北京",s:"京",paths:["M443.5,154.3L445.1,153.4L439.6,152.8L436.5,148.8L433.4,150.3L434.7,152.1L427.6,154.8L429.7,158.0L424.5,160.7L424.8,165.0L434.3,167.4L437.9,165.6L439.5,163.5L437.8,160.6L443.5,159.4L443.5,154.3Z"],cx:434.2,cy:158.8},
+{n:"天津",s:"津",paths:["M447.7,167.9L449.3,165.9L446.5,165.9L445.1,162.1L447.8,160.3L444.2,158.1L441.8,165.1L438.1,165.4L437.5,175.3L442.5,177.6L447.3,176.2L450.6,169.8L445.2,168.4L447.7,167.9Z"],cx:443.5,cy:169.2},
+{n:"山东",s:"鲁",paths:["M433.7,222.6L434.5,219.7L437.9,218.8L441.7,225.0L449.5,222.2L453.8,225.2L458.6,218.2L463.7,217.6L466.6,211.7L473.1,207.3L471.8,204.7L477.1,205.5L476.9,202.5L479.7,201.6L478.5,199.9L495.3,196.6L497.1,191.0L485.7,190.4L477.3,185.9L472.3,187.5L467.4,194.0L463.3,194.2L459.4,189.4L462.9,185.5L459.1,182.4L449.0,180.5L444.4,185.7L438.0,185.7L423.6,199.8L423.4,209.3L431.0,205.7L418.2,217.9L425.5,223.5L433.7,222.6Z"],cx:448.8,cy:204.5},
+{n:"河南",s:"豫",paths:["M397.2,248.9L407.4,248.3L408.5,254.8L415.9,255.7L418.3,259.2L421.6,257.5L423.0,260.1L428.9,255.6L429.1,246.5L426.3,248.3L422.0,246.2L419.0,240.0L423.0,239.8L423.5,235.7L426.4,234.8L426.1,229.7L432.6,233.1L436.4,231.2L435.8,226.9L418.2,217.9L431.0,205.7L423.6,209.5L424.7,205.0L419.1,206.4L407.3,202.8L406.3,211.2L401.3,214.7L390.6,215.3L390.6,217.9L385.7,220.3L373.8,223.1L382.6,242.8L391.6,248.7L397.2,248.9Z"],cx:406.2,cy:231.4},
+{n:"湖北",s:"鄂",paths:["M380.5,239.5L364.4,239.7L371.6,244.2L370.2,246.7L366.3,246.1L365.0,249.5L365.9,256.1L372.0,262.7L370.8,266.8L368.9,265.7L363.5,270.4L360.4,268.5L354.3,270.3L355.8,273.1L353.7,277.8L356.6,277.7L361.4,285.6L367.8,278.8L375.6,279.3L375.0,275.4L378.5,274.5L388.1,277.1L392.9,281.5L399.0,278.4L401.5,282.3L405.7,277.7L407.6,282.4L406.1,284.6L409.0,287.2L425.1,277.8L431.4,278.1L427.6,268.1L430.7,265.0L428.7,262.8L425.9,262.8L421.6,257.5L418.3,259.2L415.9,255.7L409.9,255.9L407.4,248.3L393.3,249.3L385.8,246.2L380.5,239.5Z"],cx:392.9,cy:266.1},
+{n:"安徽",s:"皖",paths:["M436.0,229.8L431.6,233.3L426.6,229.3L426.4,234.8L423.5,235.7L422.9,240.0L419.0,240.0L422.0,246.2L426.3,248.3L429.1,246.5L429.1,255.1L425.0,256.8L423.7,260.5L430.6,264.4L427.6,268.1L431.4,278.1L436.7,275.1L439.0,276.6L437.2,281.0L442.2,276.8L445.4,280.7L453.2,282.6L458.9,276.7L458.8,272.4L464.0,271.7L462.4,269.0L466.3,264.3L463.5,261.0L457.9,261.9L458.6,257.3L453.6,253.8L457.0,249.2L455.7,246.3L460.8,247.8L461.8,243.5L458.5,242.0L457.6,244.5L453.8,244.7L452.2,239.3L449.4,238.9L451.6,233.0L447.5,233.3L446.3,229.7L441.9,229.2L434.3,222.5L432.0,223.4L436.0,229.8Z"],cx:444.9,cy:255.4},
+{n:"江苏",s:"苏",paths:["M443.1,223.5L441.7,225.0L437.9,218.8L433.7,221.4L441.3,228.8L446.3,229.7L447.5,233.3L451.6,233.0L449.4,238.9L452.2,239.3L453.8,244.7L457.6,244.5L458.5,242.0L461.8,243.5L460.8,247.8L455.7,246.3L457.0,249.2L453.9,252.1L454.8,255.5L458.6,257.3L457.9,261.9L469.2,262.5L475.0,267.3L483.7,258.1L482.0,254.9L489.7,257.4L484.3,248.0L479.6,246.0L473.1,226.5L462.4,220.8L462.9,217.2L458.6,218.2L453.8,225.2L449.5,222.2L443.1,223.5Z"],cx:464.9,cy:241.9},
+{n:"上海",s:"沪",paths:["M479.0,264.3L482.7,268.2L489.9,266.1L483.4,258.6L479.0,264.3Z", "M489.7,257.4L481.2,255.8L488.2,259.5L489.7,257.4Z", "M488.0,260.7L485.1,259.0L488.0,260.7Z", "M488.0,260.4L491.2,261.0L488.0,260.4Z"],cx:484.7,cy:262.3},
+{n:"浙江",s:"浙",paths:["M454.3,295.7L458.0,296.2L459.1,305.2L466.1,302.7L467.7,307.0L472.6,305.5L475.5,308.7L477.8,301.6L481.9,301.0L480.6,297.9L486.3,296.1L485.4,291.5L487.7,289.1L486.1,285.6L489.7,286.9L488.3,280.0L491.4,277.1L480.9,270.1L482.7,267.7L479.9,264.3L475.0,267.3L466.8,262.6L462.4,269.0L464.0,271.7L458.8,272.4L457.4,279.0L450.4,285.1L454.3,295.7Z", "M491.6,276.1L493.4,275.8L489.3,274.1L491.6,276.1Z", "M494.3,271.3L492.8,270.6L494.3,271.3Z", "M489.4,267.1L491.3,269.2L489.4,267.1Z", "M491.8,280.0L490.8,278.5L491.8,280.0Z"],cx:473.4,cy:285.2},
+{n:"江西",s:"赣",paths:["M451.9,283.0L442.2,276.8L437.2,281.0L439.0,276.6L436.7,275.1L432.8,278.4L425.1,277.8L409.5,286.4L412.5,295.3L405.8,304.2L406.2,306.5L408.7,306.1L408.6,314.4L411.1,315.5L409.6,320.3L412.4,320.2L410.1,321.8L409.4,328.4L410.4,330.6L417.4,330.3L411.9,337.4L414.3,339.4L424.1,335.9L428.4,338.5L428.6,331.1L436.4,316.5L435.5,312.3L441.7,307.2L440.0,303.3L445.2,299.2L447.4,301.3L453.6,297.9L454.8,295.2L450.4,286.3L451.9,283.0Z"],cx:427.3,cy:303.5},
+{n:"福建",s:"闽",paths:["M460.0,333.8L459.2,330.5L461.2,333.4L463.8,330.6L462.2,328.1L468.7,328.3L467.9,325.8L466.8,328.0L464.8,326.2L467.2,321.9L466.0,320.1L469.5,317.9L465.8,314.8L469.4,313.0L468.3,316.0L471.4,314.7L470.5,312.1L474.3,307.5L472.6,305.5L467.7,307.0L466.1,302.7L459.1,305.2L457.2,295.4L447.4,301.3L442.8,300.5L440.0,303.3L440.5,309.3L435.5,312.3L436.0,317.7L431.3,323.6L428.7,334.0L438.2,337.5L439.8,346.7L443.0,350.2L451.6,341.9L451.2,338.4L456.1,339.0L456.5,335.3L460.0,333.8Z", "M454.1,339.1L452.8,340.2L454.1,339.1Z"],cx:450.7,cy:321.5},
+{n:"湖南",s:"湘",paths:["M390.2,336.5L391.9,331.4L398.7,334.7L400.3,331.2L398.5,329.6L409.4,328.4L410.1,321.8L412.4,320.2L409.6,320.3L411.1,315.5L408.6,314.4L408.7,306.1L406.2,306.5L405.8,304.2L412.5,295.3L411.5,289.5L407.0,286.6L405.7,277.7L400.8,282.5L400.3,278.6L392.9,281.5L387.6,276.9L375.0,275.4L375.6,279.3L368.7,278.6L364.3,281.4L361.9,291.7L364.6,304.0L357.9,309.5L364.7,308.9L366.0,313.3L362.8,314.0L362.7,318.2L366.9,323.4L369.7,319.8L372.6,322.4L376.1,318.2L382.8,318.9L381.9,322.5L384.9,323.6L379.7,333.8L382.7,331.8L384.5,337.3L390.2,336.5Z"],cx:387.1,cy:303.5},
+{n:"四川",s:"川",paths:["M281.7,308.2L286.3,319.4L291.1,321.2L300.0,317.7L298.8,307.1L304.9,301.4L305.7,296.3L308.8,295.4L308.5,291.3L314.3,291.8L313.0,298.4L315.7,300.8L320.6,297.9L323.1,302.4L333.1,301.2L332.1,297.5L326.4,295.3L329.7,290.2L333.8,293.5L332.1,288.6L328.0,288.2L327.0,284.2L323.3,282.4L327.4,277.3L325.4,274.2L328.3,271.0L340.6,275.5L344.8,266.4L348.5,266.9L351.9,258.8L355.5,256.8L352.6,253.4L355.1,250.2L349.8,251.3L344.4,246.9L342.1,248.1L340.7,244.8L334.2,245.9L330.4,243.1L326.0,245.0L324.7,242.3L321.9,245.9L316.4,245.4L312.9,243.4L314.2,237.7L311.8,234.6L301.7,232.2L299.1,226.4L291.4,230.4L294.8,235.3L292.0,238.9L288.3,240.1L288.4,234.6L286.3,240.3L281.2,239.0L281.6,245.4L276.5,246.9L274.0,244.3L271.1,245.6L268.8,241.0L267.2,244.6L262.7,242.9L257.6,238.3L254.0,229.0L246.7,228.5L243.7,232.1L247.5,236.8L243.5,242.7L252.2,249.1L258.9,260.2L256.0,262.3L259.6,267.2L261.6,294.1L263.7,296.9L267.2,289.3L271.8,295.3L270.2,297.3L273.1,302.2L276.8,299.9L281.7,308.2Z"],cx:297.3,cy:269.1},
+{n:"重庆",s:"渝",paths:["M333.7,293.0L334.7,289.4L337.1,293.8L340.2,288.8L343.8,289.2L344.0,285.4L347.5,285.2L348.7,288.0L353.1,286.6L355.8,295.1L357.1,293.2L357.4,296.4L360.9,296.9L363.2,287.0L356.6,277.7L353.7,277.8L355.8,273.1L354.3,270.3L360.4,268.5L363.5,270.4L368.9,265.7L370.8,266.8L371.2,259.8L354.0,250.8L352.6,253.4L355.5,256.8L351.9,258.8L348.5,266.9L344.8,266.4L340.6,275.5L327.9,271.1L325.4,274.2L327.4,277.3L323.1,281.4L328.0,288.2L332.1,288.6L333.7,293.0Z"],cx:348.2,cy:275.9},
+{n:"贵州",s:"黔",paths:["M362.7,293.3L360.9,296.9L357.7,296.6L356.4,291.9L353.3,291.2L353.1,286.6L348.7,288.0L344.4,285.2L343.8,289.2L340.2,288.8L337.1,293.8L334.7,289.4L333.8,293.5L329.7,290.2L326.2,293.0L329.0,297.6L332.7,298.2L332.4,301.7L323.5,301.9L321.8,306.3L318.7,307.2L309.3,305.4L306.0,309.8L307.6,315.3L314.2,313.8L316.8,317.7L313.1,326.0L318.3,330.8L315.3,336.6L317.3,337.9L322.1,333.6L330.2,337.7L331.5,334.0L339.8,330.8L342.1,326.5L348.4,332.2L353.1,327.5L356.3,330.0L356.9,326.3L360.2,327.6L360.8,325.2L359.0,325.3L363.4,325.1L365.1,320.5L362.7,318.2L362.8,314.0L365.2,309.8L357.9,309.5L364.6,304.0L362.7,293.3Z"],cx:338.8,cy:312.6},
+{n:"云南",s:"滇",paths:["M323.1,302.4L320.6,297.9L315.1,300.4L312.5,294.4L314.3,291.8L308.5,291.3L308.8,295.4L305.7,296.3L304.9,301.4L298.8,307.1L299.8,318.1L288.4,321.5L276.8,299.9L273.1,302.2L270.2,297.3L271.8,295.3L267.2,289.3L263.1,296.4L259.8,285.1L259.7,289.4L256.2,288.0L257.1,296.4L253.9,297.7L253.0,294.6L251.4,297.4L253.2,304.5L257.1,304.1L257.1,323.7L247.2,332.6L245.3,339.9L247.5,343.1L245.3,345.8L258.8,343.3L256.7,347.3L258.9,354.1L265.6,357.4L261.6,366.2L269.7,367.4L272.4,374.1L281.2,370.6L282.2,376.8L287.6,377.8L286.7,362.5L292.7,363.2L295.1,359.1L300.3,362.9L303.2,358.7L309.6,362.2L311.2,358.7L317.4,358.5L318.8,354.6L323.3,352.0L325.4,354.4L331.4,349.9L330.0,343.6L322.6,344.3L321.1,340.2L315.8,340.1L318.3,330.8L313.1,326.0L316.7,317.0L314.2,313.8L308.2,315.9L306.0,309.8L309.3,305.4L311.7,307.5L313.6,305.1L321.8,306.3L323.1,302.4Z"],cx:284.9,cy:333.8},
+{n:"广西",s:"桂",paths:["M364.8,321.7L363.4,325.1L359.0,325.3L360.8,325.2L360.2,327.6L356.9,326.3L356.3,330.0L353.5,327.3L347.6,332.1L342.1,326.5L339.8,330.8L331.5,334.0L330.2,337.7L322.1,333.6L317.3,337.9L315.3,336.6L315.2,338.8L317.1,341.3L321.1,340.2L322.6,344.3L330.5,344.0L331.4,349.9L326.4,351.8L325.7,355.7L338.4,358.8L335.6,362.8L337.0,368.5L343.9,372.7L352.3,373.9L356.3,371.7L361.4,373.0L361.4,375.0L367.9,374.2L369.5,369.8L373.9,369.2L373.5,365.8L376.8,366.0L377.5,361.6L383.6,357.8L384.0,351.1L390.6,340.5L390.2,336.5L384.3,337.1L383.8,332.0L379.7,333.8L384.9,323.6L381.9,322.5L382.8,318.9L376.1,318.2L372.6,322.4L369.7,319.8L367.8,323.5L364.8,321.7Z"],cx:354.9,cy:346.4},
+{n:"广东",s:"粤",paths:["M405.6,365.6L406.8,359.7L408.9,362.9L413.8,361.1L415.1,363.0L417.1,358.9L418.9,361.8L421.9,358.6L425.8,360.5L426.5,358.0L435.1,357.3L438.9,350.7L441.9,350.0L438.2,337.5L428.9,334.2L428.4,338.5L424.1,335.9L414.3,339.4L411.7,337.1L417.4,332.1L415.4,328.7L410.4,330.6L410.0,328.4L405.8,330.0L402.3,327.6L398.5,329.6L400.3,331.2L398.7,334.7L391.9,331.4L389.4,345.1L384.0,351.1L383.6,357.8L377.5,361.6L376.8,366.0L373.5,365.8L373.9,369.2L367.4,372.4L369.0,374.6L366.6,380.3L369.1,388.3L375.4,386.2L371.8,380.7L374.2,377.3L391.4,370.4L399.3,369.9L400.9,366.5L402.7,369.5L405.6,365.6Z", "M398.5,371.0L397.8,373.0L398.5,371.0Z", "M395.3,372.8L396.6,371.3L395.3,372.8Z", "M374.3,377.5L376.3,377.1L374.3,377.5Z", "M375.2,378.6L372.0,380.2L375.4,380.4L375.2,378.6Z", "M437.7,382.1L438.6,384.2L437.7,382.1Z"],cx:404.4,cy:358.3},
+{n:"海南",s:"琼",paths:["M371.1,390.7L363.0,391.9L356.4,398.5L356.4,408.4L365.8,412.3L375.0,406.5L380.4,393.7L376.9,389.1L371.1,390.7Z", "M402.7,527.6L403.9,525.7L402.7,527.6Z", "M409.0,533.5L413.7,533.2L415.4,529.6L409.0,533.5Z", "M364.6,536.5L369.5,534.5L364.6,536.5Z", "M434.9,501.4L436.4,502.1L434.9,501.4Z", "M421.7,524.6L423.2,524.9L421.7,524.6Z", "M369.4,530.7L370.8,529.6L369.4,530.7Z", "M442.7,498.0L444.2,497.9L442.7,498.0Z"],cx:423.3,cy:522.2},
+{n:"辽宁",s:"辽",paths:["M505.3,163.4L511.5,163.9L517.4,156.7L526.9,152.2L527.9,147.6L522.9,140.0L524.9,136.4L518.7,128.9L518.8,125.0L514.7,128.3L508.0,120.9L502.3,128.4L489.4,130.1L474.7,136.8L471.0,141.5L468.4,135.5L465.0,133.5L462.4,135.7L464.0,144.1L458.5,151.5L465.6,154.7L468.5,161.1L474.9,158.7L481.3,151.0L488.2,150.7L492.5,155.0L482.3,166.1L482.7,168.2L487.2,168.3L486.3,171.6L480.9,173.4L481.4,175.7L505.3,163.4Z"],cx:496.3,cy:146.1},
+{n:"吉林",s:"吉",paths:["M566.0,133.2L569.5,126.4L576.5,133.1L574.1,129.6L581.5,127.2L583.2,120.8L574.1,119.0L573.7,114.5L558.8,120.3L553.7,109.1L547.8,114.2L545.6,108.4L540.5,108.5L539.6,102.0L530.0,101.6L526.9,97.6L514.0,98.4L510.0,94.6L509.0,88.5L497.9,91.2L497.4,95.4L488.4,91.7L486.4,94.8L489.7,95.5L492.4,100.3L490.5,104.5L492.7,112.1L501.2,109.1L505.2,118.4L503.0,120.2L504.2,121.8L508.6,121.2L514.7,128.3L518.8,125.0L518.7,128.9L524.9,136.4L523.2,141.7L527.9,147.6L525.8,150.7L530.4,150.3L539.3,140.2L542.5,143.9L551.1,145.3L553.2,142.9L550.3,138.0L559.5,137.7L563.7,132.7L566.0,133.2Z"],cx:531.9,cy:118.8},
+{n:"黑龙江",s:"黑",paths:["M505.7,89.4L509.6,88.7L510.0,94.6L514.0,98.4L526.9,97.6L530.0,101.6L539.6,102.0L540.5,108.5L545.6,108.4L547.8,114.2L553.7,109.1L558.8,120.3L573.7,114.5L574.1,119.0L581.4,121.6L583.1,114.5L579.7,105.2L588.9,99.6L601.4,102.0L601.4,98.5L609.1,89.1L611.8,76.7L617.8,72.3L615.5,69.2L616.8,66.1L621.0,64.0L601.3,67.4L595.6,72.2L580.3,72.5L576.7,67.8L578.5,65.6L575.4,62.0L576.8,58.9L572.4,59.0L565.2,52.6L548.2,50.7L545.3,48.0L546.0,43.2L539.2,33.8L535.6,21.4L526.1,10.5L505.2,5.1L487.0,7.0L485.0,7.6L488.2,10.8L481.8,16.1L488.4,19.8L491.7,17.1L497.9,20.1L496.3,22.2L500.0,30.9L514.1,31.4L521.3,26.9L530.6,34.0L522.6,44.8L522.2,55.3L518.1,56.2L515.3,67.3L512.6,62.8L494.2,76.5L500.3,83.7L503.7,82.4L503.0,80.5L506.1,81.8L506.0,84.1L500.0,85.4L501.8,89.1L505.7,89.4Z"],cx:547.7,cy:70.6}];
+
+// Risk level assignment per province
+var riskMap={
+  '天津':'high','广东':'high',
+  '北京':'moderate','上海':'moderate','江苏':'moderate','重庆':'moderate',
+  '山东':'low','宁夏':'low','内蒙古':'low','湖北':'low',
+  '浙江':'low','湖南':'low','四川':'low','辽宁':'low',
+  '海南':'low','江西':'low','甘肃':'low','安徽':'low',
+  '吉林':'low','黑龙江':'low',
+  '陕西':'low','贵州':'low','河北':'low','河南':'low',
+  '云南':'low','新疆':'low','福建':'low','青海':'low',
+  '山西':'low','广西':'low','西藏':'low'
+}
+
+// Risk-based color scheme
+var riskColors={
+  high:{fill:'#FEE2E2',stroke:'#EF4444',label:'高风险',textColor:'#991B1B',badge:'#EF4444'},
+  moderate:{fill:'#FEF3C7',stroke:'#F59E0B',label:'中风险',textColor:'#92400E',badge:'#F59E0B'},
+  low:{fill:'#D1FAE5',stroke:'#10B981',label:'低风险',textColor:'#065F46',badge:'#10B981'},
+  none:{fill:'#F1F5F9',stroke:'#CBD5E1',label:'暂无数据',textColor:'#64748B',badge:'#CBD5E1'}
+};
+
+function renderMap(){
+  var provCounts={};
+  policies.forEach(function(p){
+    p.provinces.forEach(function(pr){
+      provCounts[pr]=(provCounts[pr]||0)+1;
+    });
+  });
+
+  var mainProvs=provGeoJSON.filter(function(p){
+    if(p.n==='北京'&&p.cy>300) return false;
+    if(p.n==='海南'&&p.cy>450) return false;
+    return true;
+  }).map(function(p){
+    return {n:p.n,s:p.s,paths:p.paths,cx:p.cx,cy:p.cy,
+            risk:riskMap[p.n]||'none',c:provCounts[p.n]||0};
+  });
+
+  var svg='<svg viewBox="-5 0 640 440" xmlns="http://www.w3.org/2000/svg">';
+  svg+='<defs>';
+  svg+='<filter id="cs" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity=".12"/></filter>';
+  svg+='</defs>';
+  svg+='<rect x="-5" y="0" width="640" height="440" fill="#FAFBFD" rx="8"/>';
+
+  mainProvs.forEach(function(p){
+    var rc=riskColors[p.risk]||riskColors.none;
+    var strokeW=p.risk==='none'?0.6:1.5;
+    var sel=curProv===p.n?' selected':'';
+    p.paths.forEach(function(d){
+      svg+='<path class="prov-path'+sel+'" d="'+d+'" fill="'+rc.fill+'" stroke="'+rc.stroke+'" stroke-width="'+strokeW+'" stroke-linejoin="round" data-name="'+p.n+'" data-risk="'+p.risk+'" onclick="filterByProvince(\''+p.n+'\',this)" title="'+p.n+'：'+p.c+'条政策（'+rc.label+'）"/>';
+    });
+  });
+
+  mainProvs.forEach(function(p){
+    if(p.n==='香港'||p.n==='澳门') return;
+    var rc=riskColors[p.risk]||riskColors.none;
+    var labelColor=p.risk==='none'?'#94A3B8':rc.textColor;
+    svg+='<text class="prov-label" x="'+p.cx.toFixed(1)+'" y="'+(p.cy+2).toFixed(1)+'" fill="'+labelColor+'">'+p.s+'</text>';
+  });
+
+  mainProvs.forEach(function(p){
+    if(p.c<=0) return;
+    var rc=riskColors[p.risk]||riskColors.none;
+    var r=6+Math.min(p.c,8)*1.8;
+    svg+='<circle class="count-badge" cx="'+p.cx.toFixed(1)+'" cy="'+(p.cy-14).toFixed(1)+'" r="'+r+'" fill="'+rc.badge+'" filter="url(#cs)" data-name="'+p.n+'" onclick="filterByProvince(\''+p.n+'\',this)"/>';
+    svg+='<text class="count-text" x="'+p.cx.toFixed(1)+'" y="'+(p.cy-14).toFixed(1)+'">'+p.c+'</text>';
+  });
+
+  svg+='<text x="500" y="425" fill="#94A3B8" font-size="7" text-anchor="middle">南海诸岛</text>';
+
+  svg+='</svg>';
+  document.getElementById('provinceMap').innerHTML=svg;
+}
+
+/* ========== INIT ========== */
+function init(){
+  var now=new Date();
+  var weekDays=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  var dateStr=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 · '+weekDays[now.getDay()];
+  document.getElementById('todayDate').textContent=dateStr;
+
+  var refreshText='';
+  if(lastUpdated){
+    var lu=new Date(lastUpdated.replace(/-/g,'/'));
+    var isToday=lu.getFullYear()===now.getFullYear()&&lu.getMonth()===now.getMonth()&&lu.getDate()===now.getDate();
+    refreshText=isToday?'今日已刷新 · 最后更新 '+lastUpdated:'最后刷新 '+lastUpdated;
+    if(todayNewCount>0) refreshText+=' · 今日新增 '+todayNewCount+' 条政策';
+    else if(isToday) refreshText+=' · 今日暂无新增政策';
+    document.getElementById('footerLastUpdated').textContent=lastUpdated;
+  }else{
+    refreshText='等待每日刷新';
+    document.getElementById('footerLastUpdated').textContent='--';
+  }
+  document.getElementById('refreshStatus').textContent=refreshText;
+
+  renderAlerts();
+  renderMap();
+  renderCatSummary();
+  renderTimeline();
+  renderTable();
+}
+
+/* ========== RENDER ALERTS ========== */
+function renderAlerts(){
+  alerts.sort(function(a,b){
+    var da=a.date.replace(/[^0-9]/g,''), db=b.date.replace(/[^0-9]/g,'');
+    return db.localeCompare(da);
+  });
+  var h='';
+  var typeLabel={new:'本周新增',upcoming:'即将生效',warning:'合规预警',info:'重要动态'};
+  alerts.forEach(function(a){
+    var provStr=a.provinces.length?a.provinces.join('、'):'全国';
+    h+='<div class="alert-item" onclick="showAlertDetail(this)" data-title="'+a.title+'" data-cat="'+a.cat+'" data-catcolor="'+a.catColor+'" data-date="'+a.date+'" data-desc="'+a.desc+'" data-provinces="'+provStr+'">';
+    h+='<div class="alert-badge '+a.type+'"></div>';
+    h+='<div class="alert-content">';
+    h+='<div class="alert-title">'+a.title+'</div>';
+    h+='<div class="alert-meta"><span class="alert-tag" style="background:'+a.catColor+'">'+a.cat+'</span><span>'+typeLabel[a.type]+'</span><span>'+a.date+'</span><span>'+provStr+'</span></div>';
+    h+='<div class="alert-desc">'+a.desc+'</div>';
+    h+='</div></div>';
+  });
+  document.getElementById('alertFeed').innerHTML=h;
+}
+
+/* ========== RENDER CATEGORY SUMMARY ========== */
+function renderCatSummary(){
+  var cats={'派遣':{count:0,color:'#3B82F6'},'外包':{count:0,color:'#8B5CF6'},'灵活用工':{count:0,color:'#10B981'},'薪税':{count:0,color:'#F59E0B'},'社保':{count:0,color:'#EF4444'},'人力资源':{count:0,color:'#0EA5E9'}};
+  policies.forEach(function(p){if(cats[p.category])cats[p.category].count++});
+  var trends={'派遣':'稳定','外包':'稳定','灵活用工':'↑ 活跃','薪税':'↑ 新规','社保':'↑ 扩面','人力资源':'稳定'};
+  var trendBg={'稳定':'#F1F5F9','↑ 活跃':'#D1FAE5','↑ 新规':'#FEF3C7','↑ 扩面':'#FEE2E2'};
+  var trendColor={'稳定':'#64748B','↑ 活跃':'#059669','↑ 新规':'#D97706','↑ 扩面':'#DC2626'};
+  var h='';
+  Object.keys(cats).forEach(function(k){
+    var c=cats[k];
+    var t=trends[k];
+    h+='<div class="cat-card" onclick="filterCat(\''+k+'\',this)" style="border-left:3px solid '+c.color+'">';
+    h+='<span class="cat-num" style="color:'+c.color+'">'+c.count+'</span>';
+    h+='<span class="cat-name">'+k+'</span>';
+    h+='<span class="cat-trend" style="background:'+trendBg[t]+';color:'+trendColor[t]+'">'+t+'</span>';
+    h+='</div>';
+  });
+  document.getElementById('catSummary').innerHTML=h;
+}
+
+/* ========== RENDER TIMELINE ========== */
+function renderTimeline(){
+  // Find the most recent year among all policies
+  var maxYear = 0;
+  policies.forEach(function(p){
+    var y = parseInt(p.date.substring(0,4), 10);
+    if(y > maxYear) maxYear = y;
+  });
+  var recentYear = String(maxYear);
+
+  // Group policies: recent year -> by month, older years -> by year
+  var recentByMonth = {};  // key: "YYYY-MM", value: [policies]
+  var byYear = {};         // key: "YYYY", value: [policies]
+  policies.forEach(function(p){
+    var y = p.date.substring(0,4);
+    if(y === recentYear){
+      // Extract month: handle "YYYY-MM" and "YYYY-MM-DD" and "YYYY"
+      var m = p.date.length >= 7 ? p.date.substring(5,7) : '00';
+      var key = y + '-' + m;
+      if(!recentByMonth[key]) recentByMonth[key] = [];
+      recentByMonth[key].push(p);
+    } else {
+      if(!byYear[y]) byYear[y] = [];
+      byYear[y].push(p);
+    }
+  });
+
+  var monthNames = {'01':'1月','02':'2月','03':'3月','04':'4月','05':'5月','06':'6月',
+                    '07':'7月','08':'8月','09':'9月','10':'10月','11':'11月','12':'12月','00':'其他'};
+
+  var h = '';
+
+  // Render recent year with month breakdown
+  if(Object.keys(recentByMonth).length > 0){
+    h += '<div class="timeline-item">';
+    h += '<div class="timeline-year expanded">' + recentYear + '</div>';
+    h += '<div class="timeline-dot-line"><div class="timeline-dot" style="background:#1E40AF;border-color:#93C5FD"></div><div class="timeline-line"></div></div>';
+    h += '<div class="timeline-content">';
+
+    // Sort months descending
+    var monthKeys = Object.keys(recentByMonth).sort().reverse();
+    monthKeys.forEach(function(mk){
+      var monthPart = mk.split('-')[1];
+      var mName = monthNames[monthPart] || monthPart;
+      var items = recentByMonth[mk];
+      h += '<div class="month-group">';
+      h += '<div class="month-label">' + mName + '<span class="month-count">' + items.length + '条政策</span></div>';
+      h += '<div class="cards-grid">';
+      items.slice().reverse().forEach(function(p){
+        h += renderPolicyCard(p, 0);
+      });
+      h += '</div></div>';
+    });
+
+    h += '</div></div>';
+  }
+
+  // Render older years (descending)
+  Object.keys(byYear).sort().reverse().forEach(function(y){
+    h += '<div class="timeline-item">';
+    h += '<div class="timeline-year">' + y + '</div>';
+    h += '<div class="timeline-dot-line"><div class="timeline-dot"></div><div class="timeline-line"></div></div>';
+    h += '<div class="timeline-content"><div class="cards-grid">';
+    byYear[y].slice().reverse().forEach(function(p){
+      h += renderPolicyCard(p, 0);
+    });
+    h += '</div></div></div>';
+  });
+
+  document.getElementById('timelineView').innerHTML = h;
+}
+
+function renderPolicyCard(p,idx){
+  var lvBg=p.level==='中央'?'#1E40AF':'#059669';
+  var catBg=CAT_COLOR[p.category]||'#6B7280';
+  var tagsHtml='';
+  p.tags.forEach(function(t){tagsHtml+='<span class="tag">'+t+'</span>'});
+  var pIdx=policies.indexOf(p);
+  var h='<div class="policy-card" onclick="showPolicyDetail('+pIdx+')"';
+  h+=' data-level="'+p.level+'" data-category="'+p.category+'" data-pidx="'+pIdx+'">';
+  h+='<div class="card-header">';
+  h+='<span class="level-badge" style="background:'+lvBg+'">'+p.level+'</span>';
+  h+='<span class="cat-badge" style="background:'+catBg+'">'+p.category+'</span>';
+  h+='<span class="type-text">'+p.type+'</span>';
+  h+='</div>';
+  h+='<div class="card-title">'+p.title+'</div>';
+  h+='<div class="card-issuer">'+p.dept+'</div>';
+  h+='<div class="card-tags">'+tagsHtml+'</div>';
+  h+='<div class="card-hint">点击查看详情 ↓</div>';
+  h+='</div>';
+  return h;
+}
+
+/* ========== RENDER TABLE ========== */
+function renderTable(){
+  var h='';
+  var sortedPolicies=policies.slice().sort(function(a,b){
+    var da=a.date.replace(/[^0-9]/g,''), db=b.date.replace(/[^0-9]/g,'');
+    return db.localeCompare(da);
+  });
+  sortedPolicies.forEach(function(p,idx){
+    var origIdx=policies.indexOf(p);
+    var lvBg=p.level==='中央'?'#1E40AF':'#059669';
+    var catBg=CAT_COLOR[p.category]||'#6B7280';
+    var tagsHtml='';
+    p.tags.forEach(function(t){tagsHtml+='<span class="tag-sm">'+t+'</span>'});
+    h+='<tr data-level="'+p.level+'" data-category="'+p.category+'" data-orig-idx="'+origIdx+'">';
+    h+='<td class="td-date">'+p.date+'</td>';
+    h+='<td><span class="level-badge-sm" style="background:'+lvBg+'">'+p.level+'</span></td>';
+    h+='<td><span class="cat-badge-sm" style="background:'+catBg+'">'+p.category+'</span></td>';
+    h+='<td class="td-type">'+p.type+'</td>';
+    h+='<td class="td-title"><strong>'+p.title+'</strong><br><span class="td-dept">'+p.dept+'</span></td>';
+    h+='<td class="td-summary">'+p.summary.substring(0,80)+'…</td>';
+    h+='<td>'+tagsHtml+'</td>';
+    h+='</tr>';
+  });
+  document.getElementById('tableBody').innerHTML=h;
+}
+
+/* ========== VIEW SWITCH ========== */
+function switchView(v){
+  document.querySelectorAll('.view-btn').forEach(function(b){b.classList.remove('active')});
+  var btns=document.querySelectorAll('.view-btn');
+  ['dashboardView','timelineView','tableView'].forEach(function(id){
+    document.getElementById(id).style.display='none';
+  });
+  var map={dashboard:'dashboardView',timeline:'timelineView',table:'tableView'};
+  document.getElementById(map[v]).style.display='block';
+  var idx={dashboard:0,timeline:1,table:2};
+  if(btns[idx[v]])btns[idx[v]].classList.add('active');
+}
+
+/* ========== FILTERS ========== */
+function filterLevel(lv,btn){
+  curLv=lv;
+  document.querySelectorAll('[data-filter]').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  applyFilters();
+}
+function filterCat(cat,btn){
+  curCat=cat;
+  document.querySelectorAll('[data-cat]').forEach(function(b){b.classList.remove('active')});
+  if(btn&&btn.classList) btn.classList.add('active');
+  document.querySelectorAll('.controls [data-cat]').forEach(function(b){
+    b.classList.remove('active');
+    if(b.dataset.cat===cat) b.classList.add('active');
+  });
+  applyFilters();
+}
+function filterByProvince(name,el){
+  if(curProv===name){curProv='all';document.getElementById('mapProvinceLabel').textContent='点击省份筛选'}
+  else{curProv=name;document.getElementById('mapProvinceLabel').textContent='已选：'+name}
+  document.querySelectorAll('.prov-path').forEach(function(b){b.classList.remove('selected')});
+  document.querySelectorAll('.count-badge').forEach(function(b){b.classList.remove('selected')});
+  if(curProv!=='all'){
+    document.querySelectorAll('.prov-path[data-name="'+name+'"]').forEach(function(b){b.classList.add('selected')});
+    document.querySelectorAll('.count-badge[data-name="'+name+'"]').forEach(function(b){b.classList.add('selected')});
+  }
+  applyFilters();
+}
+
+function applyFilters(){
+  document.querySelectorAll('.policy-card').forEach(function(c){
+    var okLv=curLv==='all'||c.dataset.level===curLv;
+    var okCat=curCat==='all'||c.dataset.category===curCat;
+    var okProv=true;
+    if(curProv!=='all'){
+      var pIdx=parseInt(c.dataset.pidx);
+      if(!isNaN(pIdx)&&policies[pIdx]){
+        okProv=policies[pIdx].level==='中央'||policies[pIdx].provinces.indexOf(curProv)>=0;
+      }
+    }
+    c.style.display=(okLv&&okCat&&okProv)?'':'none';
+  });
+  document.querySelectorAll('.timeline-item').forEach(function(item){
+    var vis=item.querySelectorAll('.policy-card:not([style*="display: none"])');
+    item.style.display=vis.length?'':'none';
+  });
+  var allRows=document.querySelectorAll('.policy-table tbody tr');
+  allRows.forEach(function(tr){
+    var lv=tr.dataset.level||'';
+    var ct=tr.dataset.category||'';
+    var okLv=curLv==='all'||lv===curLv;
+    var okCat=curCat==='all'||ct===curCat;
+    var okProv=true;
+    if(curProv!=='all'){
+      var oi=parseInt(tr.dataset.origIdx);
+      if(!isNaN(oi)&&policies[oi]){
+        okProv=policies[oi].level==='中央'||policies[oi].provinces.indexOf(curProv)>=0;
+      }
+    }
+    tr.style.display=(okLv&&okCat&&okProv)?'':'none';
+  });
+}
+
+/* ========== MODALS ========== */
+function showPolicyDetail(idx){
+  var p=policies[idx];
+  if(!p)return;
+  document.getElementById('mTitle').textContent=p.title;
+  var lvBg=p.level==='中央'?'#1E40AF':'#059669';
+  var catBg=CAT_COLOR[p.category]||'#6B7280';
+  document.getElementById('mMeta').innerHTML=
+    '<span style="background:'+lvBg+';color:#fff">'+p.level+'</span>'+
+    '<span style="background:'+catBg+';color:#fff">'+p.category+'</span>'+
+    '<span style="background:#F1F5F9;color:#475569">'+p.date+'</span>'+
+    '<span style="background:#F1F5F9;color:#475569">'+p.dept+'</span>'+
+    '<span style="background:#F1F5F9;color:#475569">'+p.type+'</span>';
+  document.getElementById('mBody').textContent=p.summary;
+  var th='';
+  p.tags.forEach(function(t){th+='<span class="tag">'+t+'</span>'});
+  if(p.provinces.length){th+='<span class="tag" style="background:#DBEAFE;color:#1E40AF">涉及：'+p.provinces.join('、')+'</span>'}
+  document.getElementById('mTags').innerHTML=th;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function showAlertDetail(el){
+  var d=el.dataset;
+  document.getElementById('mTitle').textContent=d.title;
+  document.getElementById('mMeta').innerHTML=
+    '<span style="background:'+d.catcolor+';color:#fff">'+d.cat+'</span>'+
+    '<span style="background:#F1F5F9;color:#475569">'+d.date+'</span>'+
+    '<span style="background:#F1F5F9;color:#475569">'+d.provinces+'</span>';
+  document.getElementById('mBody').textContent=d.desc;
+  document.getElementById('mTags').innerHTML='';
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal(e){if(!e||e.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show')}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
+
+/* ========== START ========== */
+init();
+</script></body></html>
